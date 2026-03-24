@@ -1,0 +1,5 @@
+= git-reticulator
+:toc: preamble
+:icons: font
+
+
