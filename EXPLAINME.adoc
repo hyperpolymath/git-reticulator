@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: PMPL-1.0-or-later
 = git-reticulator -- EXPLAINME
 
-== "Semantic lattice builder for git repositories in AffineScript"
+== Semantic lattice builder for git repositories in AffineScript
 
 [quote, Cargo.toml]
 ____
