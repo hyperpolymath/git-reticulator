@@ -1,27 +1,34 @@
-= Git Reticulator — EXPLAINME
-:toc: preamble
+// SPDX-License-Identifier: PMPL-1.0-or-later
+= git-reticulator -- EXPLAINME
 
-This document backs up the claims made in README with evidence and rationale.
+== "Semantic lattice builder for git repositories in AffineScript"
 
-== What Is This?
+[quote, Cargo.toml]
+____
+Semantic lattice builder for git repositories in AffineScript.
+____
 
-Git Reticulator is a hyperpolymath project. See README.adoc for usage.
+git-reticulator builds a lattice (partial order) over commits and refs in a
+git repository, using AffineScript's affine-type semantics for safe traversal.
+See `src/lattice/` for the lattice construction and `src/api/` for the REST
+interface.
 
-== Why These Choices?
+**Caveat:** The README is currently empty beyond the title. The claim above
+comes from `Cargo.toml` -- the lattice module exists but the project is early.
 
-=== Language
+[cols="1,2", options="header"]
+|===
+| Path | Proves
 
-The language(s) used in this project were chosen per the hyperpolymath
-language policy (see CLAUDE.md for the full list of allowed/banned languages).
+| `Cargo.toml`
+| Declares the project, its description, and Rust dependencies (actix-web, tokio, clap)
 
-=== Architecture
+| `src/lattice/`
+| Lattice construction module (affine sub-module for AffineScript integration)
 
-Architecture decisions are documented in `.machine_readable/` checkpoint files.
+| `src/api/`
+| REST API surface (actix-web)
 
-== Alternatives Considered
-
-(To be filled in as the project matures.)
-
-== Proof of Claims
-
-(Link formal verification results from the `proven` repo where applicable.)
+| `src/cli/`
+| CLI entry point (clap)
+|===
