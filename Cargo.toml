@@ -21,7 +21,7 @@ clap = { version = "4.0", features = ["derive"] }
 # Optional dependencies (feature-gated)
 affinescript = { package = "affinescript-runtime", path = "../nextgen-languages/affinescript/runtime", optional = true }
 reqwest = { version = "0.12", features = ["json"], optional = true }
-git2 = { version = "0.19", optional = true }               # Git repo parsing
+git2 = { version = "0.20", optional = true }               # Git repo parsing
 postgres = { version = "0.19", features = ["with-uuid-1"], optional = true }
 tch = { version = "0.13", optional = true }                 # PyTorch embeddings
 
