@@ -1,6 +1,6 @@
 # TEST-NEEDS — git-reticulator
 
-## CRG Grade C — ACHIEVED 2026-04-04
+## CRG Grade: C — ACHIEVED 2026-04-04
 
 All required test categories for CRG Grade C are present and passing.
 
