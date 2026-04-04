@@ -1,0 +1,44 @@
+; SPDX-License-Identifier: PMPL-1.0-or-later
+; Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+;
+; .machine_readable/STATE.a2ml
+; Machine-readable project state for git-reticulator.
+
+(state
+  (metadata
+    (repo "git-reticulator")
+    (version "0.1.0")
+    (language "rust")
+    (last-updated "2026-04-04"))
+
+  (project-context
+    (description "Semantic lattice builder for git repositories using AffineScript")
+    (primary-language "rust")
+    (secondary-language "affinescript"))
+
+  (crg
+    (grade "C")
+    (achieved-date "2026-04-04")
+    (test-categories
+      (unit        "yes" (location "src/lib.rs#unit_tests") (count 7))
+      (smoke       "yes" (location "src/lib.rs#unit_tests") (count 2))
+      (property    "yes" (location "tests/property_tests.rs") (count 5))
+      (e2e         "yes" (location "tests/integration_tests.rs") (count 2))
+      (reflexive   "yes" (location "tests/integration_tests.rs") (count 2))
+      (contract    "yes" (location "tests/integration_tests.rs") (count 3))
+      (aspect      "yes" (location "tests/integration_tests.rs") (count 6))
+      (benchmarks  "yes" (location "benches/git_reticulator_bench.rs") (count 6))))
+
+  (current-position
+    (milestone "CRG Grade C achieved")
+    (next-milestone "CRG Grade B (requires 6 quality targets)"))
+
+  (blockers-and-issues
+    (blocker "affinescript-runtime path dep not resolvable without nextgen-languages present"
+             (severity "low")
+             (workaround "Feature gated; default features exclude it")))
+
+  (critical-next-actions
+    (action "Implement actual AffineScript engine integration behind feature flag")
+    (action "Add real git2-based lattice building")
+    (action "Upgrade to CRG Grade B: 6 quality targets")))

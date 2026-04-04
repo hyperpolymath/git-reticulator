@@ -35,7 +35,8 @@ http-client = ["reqwest"]                 # HTTP client for external calls
 full = ["affinescript-engine", "git-integration", "db", "embeddings", "http-client"]
 
 [dev-dependencies]
-criterion = "0.4"                     # For benchmarks
+criterion = { version = "0.4", features = ["html_reports"] }   # Benchmarks
+proptest = "1"                                                  # Property-based testing
 
 [lib]
 name = "git_reticulator"
@@ -44,3 +45,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "reticulate"
 path = "src/cli/main.rs"
+
+[[bench]]
+name = "git_reticulator_bench"
+harness = false
