@@ -4,13 +4,13 @@
     "team"
   ],
   "capabilities": {
-    "primary": {
-      "description": "TODO: describe this service's primary capability",
+    "static-analysis": {
+      "description": "Builds semantic lattices from git repository history using AffineScript analysis.",
       "endpoint": "/api",
       "panel_compatible": true,
       "protocol": "http",
       "requires_auth": false,
-      "type": "custom"
+      "type": "static-analysis"
     }
   },
   "consumes": [],
