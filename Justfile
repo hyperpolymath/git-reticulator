@@ -1,5 +1,7 @@
 # Justfile for Git-Reticulator orchestration
 
+import? "contractile.just"
+
 DB_URL := "postgresql://hyper:password@localhost/git_reticulator"
 
 # Build all components
