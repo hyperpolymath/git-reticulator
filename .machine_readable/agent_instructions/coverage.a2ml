@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # coverage.a2ml — Session coverage tracking
 # Updated at the end of each AI agent session.
@@ -9,7 +9,7 @@
 
 [metadata]
 version = "1.0.0"
-last-updated = "{{CURRENT_DATE}}"
+last-updated = "2026-06-03"
 
 # ============================================================================
 # COVERAGE STATE
@@ -18,9 +18,20 @@ last-updated = "{{CURRENT_DATE}}"
 # visited and which have known MUSTs that were skipped.
 
 [coverage]
-total-components = 0
-visited-components = 0
-coverage-percent = 0
+total-components = 1
+visited-components = 1
+coverage-percent = 100
+
+[coverage.visited.metadata-and-docs]
+date = "2026-06-03"
+ring = 1
+fixes = 14
+notes = "Tidy-up pass: created 6a2/* (6 files) + PROOF-NEEDS.md + READINESS.md; de-templated 0-AI-MANIFEST, methodology, INTENT.contractile, agent_instructions/*; corrected TOPOLOGY/README/EXPLAINME; filled contractiles/intend; removed stale .machine_readable/STATE.a2ml; fixed Cargo readme path."
+
+[coverage.cherry-picking]
+easy-high-completed = 10
+hard-high-deferred = 1
+assessment = "Docs/config/metadata tidy completed. The one hard item (core-language decision, META ADR-001) is correctly deferred to the maintainer — it needs a design call, not a doc edit."
 
 # ============================================================================
 # VISITED COMPONENTS

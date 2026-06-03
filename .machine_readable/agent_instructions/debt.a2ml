@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # debt.a2ml — Meander debt list
 # Things found but not fixed. Carried between sessions.
@@ -9,7 +9,7 @@
 
 [metadata]
 version = "1.0.0"
-last-updated = "{{CURRENT_DATE}}"
+last-updated = "2026-06-03"
 
 # ============================================================================
 # DEBT ITEMS
@@ -47,3 +47,33 @@ last-updated = "{{CURRENT_DATE}}"
 # effort = "easy"
 # impact = "low"
 # discovered = "2026-03-23"
+
+# --- Live debt carried from the 2026-06-03 tidy-up pass ---
+
+[[debt.should]]
+component = "src/lattice/affine"
+issue = "Core .affine cannot compile and calls Rust crates AffineScript can't bind — decide Rust-native core vs wait-for-AffineScript (META ADR-001)."
+effort = "hard"
+impact = "high"
+discovered = "2026-06-03"
+
+[[debt.should]]
+component = "contractiles"
+issue = "Two parallel contractile systems: .machine_readable/*.contractile (S-expr, non-load-bearing) vs contractiles/ (load-bearing, generates contractile.just). Consolidate to one canonical location per 0-AI-MANIFEST."
+effort = "medium"
+impact = "medium"
+discovered = "2026-06-03"
+
+[[debt.could]]
+component = "CHANGELOG.md"
+issue = "Line 'replace casket-pages with standard Jekyll Pages workflow' is a stale wart contradicting estate policy; actual workflow casket-pages.yml is correct."
+effort = "easy"
+impact = "low"
+discovered = "2026-06-03"
+
+[[debt.could]]
+component = "contractile.just"
+issue = "DUST section references contractiles/dust/Dustfile.a2ml which does not exist; add it then regenerate via `contractile gen-just --dir contractiles`."
+effort = "easy"
+impact = "low"
+discovered = "2026-06-03"
