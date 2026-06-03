@@ -77,3 +77,17 @@ issue = "DUST section references contractiles/dust/Dustfile.a2ml which does not 
 effort = "easy"
 impact = "low"
 discovered = "2026-06-03"
+
+[[debt.could]]
+component = ".github/workflows (reusable-caller wrappers)"
+issue = "Hypatia flags missing_timeout_minutes on governance.yml/hypatia-scan.yml/rust-ci.yml, but these are reusable-callers (uses:) where timeout-minutes is not a legal job key — the timeout must be set inside the hyperpolymath/standards reusables (out of this repo's scope). casket-pages.yml (real steps) was fixed in PR #23."
+effort = "medium"
+impact = "low"
+discovered = "2026-06-03"
+
+[[debt.could]]
+component = "governance.yml"
+issue = "Hypatia flags unpinned_action: governance-reusable.yml@main is floated on @main not a SHA. Left intentionally (maintainer: estate may want first-party reusables to auto-update); revisit if the estate standardises on SHA-pinned reusables."
+effort = "easy"
+impact = "low"
+discovered = "2026-06-03"
