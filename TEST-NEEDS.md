@@ -4,6 +4,14 @@
 
 All required test categories for CRG Grade C are present and passing.
 
+> **Honest caveat (2026-06-03):** these 27 tests are *smoke-level* — they call
+> `build_lattice`/`query_lattice` (which are `println!` stubs) and assert "does
+> not panic". They verify the host compiles and the API surface is reachable;
+> they do **not** exercise real lattice logic (there is none yet). The
+> property/contract/aspect/e2e labels describe test *categories*, not
+> behavioural depth. Behavioural + property tests over a real lattice are owed
+> alongside `PROOF-NEEDS.md` P1–P4.
+
 ### Test Inventory
 
 | Category | Status | Location | Count |
@@ -35,4 +43,4 @@ cargo bench
 ### Next: CRG Grade B
 
 Requires 6 quality targets (linting, formatting, documentation coverage, etc.).
-See `.machine_readable/STATE.a2ml` for details.
+See `.machine_readable/6a2/STATE.a2ml` for details.

@@ -1,34 +1,77 @@
 // SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = git-reticulator -- EXPLAINME
 
-== Semantic lattice builder for git repositories in AffineScript
+== Developer deep-dive
 
-[quote, Cargo.toml]
-____
-Semantic lattice builder for git repositories in AffineScript.
-____
+git-reticulator builds a semantic structure over a git repository and exposes
+it for token-bounded, (eventually) proof-carrying retrieval. It is the symbolic
+layer of a neuro-symbolic stack — see `.machine_readable/6a2/NEUROSYM.a2ml` for
+the full architecture and `PROOF-NEEDS.md` for the formal obligations.
 
-git-reticulator builds a lattice (partial order) over commits and refs in a
-git repository, using AffineScript's affine-type semantics for safe traversal.
-See `src/lattice/` for the lattice construction and `src/api/` for the REST
-interface.
+[IMPORTANT]
+====
+Honest status (legend: IMPLEMENTED | SKELETON | ASPIRATIONAL):
 
-**Caveat:** The README is currently empty beyond the title. The claim above
-comes from `Cargo.toml` -- the lattice module exists but the project is early.
+* The Rust host (`src/lib.rs`, `src/cli/main.rs`, `src/api/app.rs`) is
+  **SKELETON** — `build_lattice`/`query_lattice` are `println!` stubs and the
+  actix routes return canned JSON.
+* The core model (`src/lattice/affine/*.affine`) is **ASPIRATIONAL** —
+  AffineScript has no working compiler, and the code calls `git2`/`postgres`
+  crates AffineScript cannot bind. A design decision is owed (META ADR-001).
+* No proofs exist. "Lattice" is a typed digraph until `PROOF-NEEDS.md` P1/P2
+  are discharged.
+====
+
+== How it is meant to work
+
+. *Ingest* (`git2`) — list files/units in the repo.
+. *Multilevel keyword extraction* — emit `Keyword` nodes at four `SemanticLevel`s
+  (Module > File > Definition > Block), each with `parent_id` and an optional
+  `embedding`.
+. *Relationship discovery* — typed weighted edges (`calls`, `contains`,
+  `inherits`, `depends_on`).
+. *Persist* — Postgres + `pgr_createTopology` for Dijkstra/A* reachability.
+. *Retrieve* — `zoom_to_node(node, level)` returns the minimal relevant
+  sub-structure for an LLM (the Level-of-Detail discipline that justifies the
+  project over `git log`).
+
+== Map: file -> what it proves/does
 
 [cols="1,2", options="header"]
 |===
-| Path | Proves
+| Path | Role
 
-| `Cargo.toml`
-| Declares the project, its description, and Rust dependencies (actix-web, tokio, clap)
+| `src/cli/main.rs`
+| `reticulate` CLI (clap): `build` / `query` / `api` subcommands. IMPLEMENTED shell, SKELETON behaviour.
 
-| `src/lattice/`
-| Lattice construction module (affine sub-module for AffineScript integration)
+| `src/api/app.rs`
+| actix-web REST shell: `POST /build`, `GET /zoom/{id}`, `GET /health`. SKELETON (canned responses).
 
-| `src/api/`
-| REST API surface (actix-web)
+| `src/lib.rs`
+| Host library bridging CLI/API to the (future) core. SKELETON (println stubs) + the 27 smoke tests.
 
-| `src/cli/`
-| CLI entry point (clap)
+| `src/lattice/affine/models.affine`
+| Data model: `SemanticLevel`, `Keyword` (with `embedding`), `Relationship`, `Lattice`. ASPIRATIONAL.
+
+| `src/lattice/affine/lattice.affine`
+| `build_lattice` + `zoom_to_node` (LOD). ASPIRATIONAL.
+
+| `src/lattice/affine/storage.affine`
+| Postgres + pgRouting persistence. ASPIRATIONAL.
+
+| `PROOF-NEEDS.md`
+| The obligations that turn "lattice" from a claim into a theorem (P1–P7).
+
+| `.machine_readable/6a2/`
+| Canonical state, architecture decisions, ecosystem, neuro-symbolic design, playbooks.
 |===
+
+== If you are here to make it real
+
+The highest-leverage first moves (from `.machine_readable/6a2/STATE.a2ml`):
+
+. Decide the core-language question (Rust-native core now, vs. wait for AffineScript).
+. Wire `git2` behind the default feature so `reticulate build` reads a real repo.
+. SCC-condense + define the order, then discharge `PROOF-NEEDS.md` P2→P1 to earn "lattice".
+. Replace a `println!` with a real lattice build + a test asserting a *property*.

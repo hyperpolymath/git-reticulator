@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# STATE.a2ml — Honest project state checkpoint for git-reticulator.
+# Canonical location is .machine_readable/6a2/ (supersedes the former
+# .machine_readable/STATE.a2ml S-expr file, removed 2026-06-03).
+
+[metadata]
+project = "git-reticulator"
+version = "0.1.0"
+last-updated = "2026-06-03"
+status = "paused-resumed"   # was on backburner; resumed 2026-06-03 for a tidy-up pass
+
+[project-context]
+name = "git-reticulator"
+purpose = "Semantic-lattice builder for git repositories: the symbolic half of a neuro-symbolic (Graph-RAG, proof-carrying retrieval) stack."
+primary-language = "rust"          # host: CLI + REST shell
+core-language = "affinescript"     # intended lattice core (src/lattice/affine/*.affine)
+completion-percentage = 15
+
+[position]
+phase = "design+skeleton"   # design | skeleton | implementation | testing | maintenance
+maturity = "experimental"   # experimental | alpha | beta | production | lts
+
+# ════════════════════════════════════════════════════════════════════════════
+# HONEST STATUS — what is real vs. what is claimed
+# ════════════════════════════════════════════════════════════════════════════
+[honest-status]
+rust-host-loc = 237                 # src/{lib.rs,cli/main.rs,api/app.rs}
+rust-host-reality = "build_lattice/query_lattice are println! stubs; actix routes return canned JSON"
+affine-core-loc = "~100 (models/storage/lattice.affine)"
+affine-core-reality = "ASPIRATIONAL — AffineScript has no working compiler yet; these files cannot build, and as written they call Rust crates (git2/postgres) which AffineScript does not bind"
+git-parsing = "NOT WIRED (git2 feature off by default; .affine calls git2 but cannot run)"
+embeddings = "NOT WIRED (tch/PyTorch feature off by default)"
+persistence = "NOT WIRED (postgres feature off by default)"
+proofs = "ZERO (no .idr/.v/.lean/.agda). The 'lattice' noun is currently unearned — see PROOF-NEEDS.md"
+test-reality = "27 tests pass but they assert 'does not panic' over println stubs; honest as smoke tests, overstated as a 7-category pyramid"
+
+[crg]
+grade = "C"
+achieved = "2026-04-04"
+caveat = "Grade C reflects test-CATEGORY presence, not behavioural coverage of real lattice logic (none exists yet). See READINESS.md + TEST-NEEDS.md."
+next = "Grade B requires 6 quality targets (lint/fmt/doc-coverage/etc.)"
+
+[blockers-and-issues]
+blockers = [
+  "affinescript-runtime path dep unresolvable without sibling repo (severity: low; feature-gated off)",
+  "the .affine core cannot compile (AffineScript compiler not ready) AND is written against Rust crates it cannot bind (severity: high; design rethink needed)",
+  "'lattice' is currently a typed DAG with no proven meet/join (severity: medium; see PROOF-NEEDS.md)",
+]
+template-debt = [
+  "RESOLVED 2026-06-03: 0-AI-MANIFEST.a2ml had [YOUR-REPO-NAME]/{{AUTHOR}} placeholders",
+  "RESOLVED 2026-06-03: 6a2 metadata set created (was missing entirely)",
+  "RESOLVED 2026-06-03: NEUROSYM.a2ml/PLAYBOOK.a2ml were empty commented stubs",
+  "RESOLVED 2026-06-03: methodology.a2ml had {{...}} placeholders (would reject itself)",
+  "RESOLVED 2026-06-03: TOPOLOGY.md described non-existent .as files",
+  "RESOLVED 2026-06-03: READINESS.md missing though Justfile reads CRG grade from it",
+  "OPEN: two parallel contractile systems (.machine_readable/*.contractile vs contractiles/) — consolidate to one canonical location as follow-up",
+  "OPEN (cosmetic): CHANGELOG line 'replace casket-pages with Jekyll' is a stale wart; the actual workflow casket-pages.yml is estate-correct",
+]
+
+[critical-next-actions]
+actions = [
+  "DECIDE the core-language question: either (a) make the lattice core real in Rust (wire git2, drop the un-compilable .affine), or (b) wait for AffineScript and rewrite the .affine to compile to Wasm without Rust-crate calls",
+  "Earn the 'lattice' word: implement SCC-condensation + a partial order, then discharge PROOF-NEEDS.md P1-P2 (Idris2)",
+  "Wire git2 behind the default feature so reticulate actually reads a repo",
+  "Replace println stubs with a real (even in-memory) lattice build + a test that asserts a lattice PROPERTY, not just no-panic",
+]
+
+[ecosystem]
+part-of = ["RSR Framework", "hyperpolymath neuro-symbolic stack"]
+feeds = ["verisimdb (octad substrate)", "vcl-ut (proof-carrying queries)", "LLM/RAG consumers"]
+sibling-language = "affinescript"
