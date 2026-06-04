@@ -29,6 +29,60 @@
   estate friction. The order-theory here is elementary; the value is in
   *connecting the proofs to the running code*, not in their depth.
 
+## Proof status (by category) — 2026-06-04
+
+Honest categorisation. **Proved** = mechanically checked (Idris2/Coq/SPARK).
+**Tested** = executable checks + unit tests in the Rust reference core
+(`src/lattice/mod.rs`) — a rung *below* proof. git-reticulator has **zero
+mechanized proofs**; what exists is tested.
+
+### Done (tested, not proved)
+- **P2a** SCC condensation is acyclic — `Condensation::is_acyclic` (Kahn
+  topological sort, a genuine runtime check, not a trust assertion) + tests
+  (the 3-node call cycle collapses to one component; condensation is a DAG).
+- **P4** LOD `zoom` soundness + completeness — tested on fixtures (defs in
+  other files excluded; every descendant returned).
+- **P1b (fragment)** `meet` = lowest common ancestor — tested (idempotent,
+  commutative, LCA correct).
+- **P1a (fragment)** reflexivity of ≤ — tested.
+
+### Not attempted
+- **P1** full lattice laws (associativity/absorption; **join**).
+- **P3** monotone abstraction (commit-DAG → lattice) — also: git-history ingest
+  isn't wired (`src/ingest.rs` is filesystem-only).
+- **P5** determinism/confluence. **P6** drift-predicate totality.
+- **P7** pgRouting≡lattice — now **N/A** (verisim is the store, not pgRouting).
+- In the *mechanized-proof* sense, **all of P1–P7 are unattempted** (zero `.idr`).
+
+### Sorries / `believe_me` / proof escapes
+- **Zero — but vacuously.** There are no proofs, so there are no escape hatches.
+  This is **not** vcl-ut's "zero `believe_me` in a real corpus" achievement; it
+  is zero-because-empty. Recorded so it is never mistaken for rigour we lack.
+
+### Structural blockers
+- No prover wired (Idris2 recommended, absent; no proof-corpus CI gate).
+- The verifiable core is migrating to AffineScript (ADR-006), itself alpha with
+  the CORE-01 soundness gap.
+- The Rust/SPARK Idris2/Zig ABI seam is **N/A until git-reticulator exposes an
+  FFI surface** (it's a CLI/REST app today) — see
+  `docs/decisions/rust-spark-stance.adoc`.
+
+### False (claims that would be untrue — and are correctly avoided)
+- "git-reticulator builds a **lattice**" (full lattice) is **false**: arbitrary
+  sibling nodes have no unique join. The code is honest — it implements `meet`
+  only and names the structure a **meet-semilattice** + typed digraph. The true,
+  scoped claim is evidenced by test; the false strong claim is not made.
+
+### What it means / how much to worry
+- **Low worry** for an early, non-safety-critical research tool. The property
+  that matters — and holds — is that **nothing is overclaimed**: code and docs
+  say "tested not proved", "meet-semilattice not lattice", "zero proofs". That
+  honesty *is* the estate bar (the doc-truthing / SPARK-theatre culture is about
+  not faking verification). The residual risk is correctness-confidence (a
+  zoom/meet edge case could ship), not safety. The path up is cheap and known:
+  P2→P1→P4 in Idris2, or largely for free from the AffineScript core's type
+  discipline post-migration.
+
 ## What Needs Proving
 
 ### P1 — It is actually a lattice (or: rename it) — **HIGH**

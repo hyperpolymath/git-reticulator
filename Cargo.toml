@@ -19,7 +19,9 @@ env_logger = "0.10"
 clap = { version = "4.0", features = ["derive"] }
 
 # Optional dependencies (feature-gated)
-affinescript = { package = "affinescript-runtime", path = "../nextgen-languages/affinescript/runtime", optional = true }
+# NOTE: the affinescript-runtime dependency is intentionally absent. AffineScript
+# integration is deferred until the Rust↔AffineScript bridge exists (ADR-006);
+# it will be re-added as a git/published dep (not a path dep) when that lands.
 reqwest = { version = "0.12", features = ["json"], optional = true }
 git2 = { version = "0.20", optional = true }               # Git repo parsing
 postgres = { version = "0.19", features = ["with-uuid-1"], optional = true }
@@ -27,12 +29,12 @@ tch = { version = "0.13", optional = true }                 # PyTorch embeddings
 
 [features]
 default = []
-affinescript-engine = ["affinescript"]     # AffineScript runtime integration
+verisim = ["reqwest"]                     # VeriSimDB octad store over HTTP (src/store.rs)
 git-integration = ["git2"]                # Git repository parsing
-db = ["postgres"]                         # PostgreSQL connectivity
+db = ["postgres"]                         # PostgreSQL connectivity (legacy; superseded by verisim)
 embeddings = ["tch"]                      # PyTorch-based embeddings
 http-client = ["reqwest"]                 # HTTP client for external calls
-full = ["affinescript-engine", "git-integration", "db", "embeddings", "http-client"]
+full = ["verisim", "git-integration", "db", "embeddings", "http-client"]
 
 [dev-dependencies]
 criterion = { version = "0.4", features = ["html_reports"] }   # Benchmarks

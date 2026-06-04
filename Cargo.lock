@@ -203,10 +203,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "affinescript-runtime"
-version = "0.1.0"
-
-[[package]]
 name = "aho-corasick"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1043,7 +1039,6 @@ name = "git-reticulator"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "affinescript-runtime",
  "clap 4.6.0",
  "criterion",
  "env_logger",

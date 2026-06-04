@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use git_reticulator::lattice::affine;
+use git_reticulator::store::LatticeStore;
 
 #[derive(Parser)]
 #[command(name = "reticulate")]
@@ -44,9 +45,41 @@ async fn main() {
 
     match &cli.command {
         Commands::Build { repo, db } => {
-            println!("🚀 Starting reticulation process...");
-            affine::build_lattice(repo, db);
-            println!("✅ Semantic lattice built and stored.");
+            println!("🚀 Reticulating {repo} ...");
+            let lattice = git_reticulator::ingest::from_path(repo);
+            let cond = lattice.condense();
+            println!(
+                "   {} nodes · {} edges · {} components · acyclic={}",
+                lattice.len(),
+                lattice.edges().len(),
+                cond.num_components,
+                cond.is_acyclic()
+            );
+
+            #[cfg(feature = "verisim")]
+            let to_verisim = if db.starts_with("http://") || db.starts_with("https://") {
+                let store = git_reticulator::store::verisim::VerisimStore::new(db.clone());
+                match store.persist(&lattice).await {
+                    Ok(n) => println!("📦 persisted {n} octads to VeriSimDB ({db})"),
+                    Err(e) => eprintln!("⚠️  verisim persist failed: {e}"),
+                }
+                true
+            } else {
+                false
+            };
+            #[cfg(not(feature = "verisim"))]
+            let to_verisim = false;
+
+            if !to_verisim {
+                let mut store = git_reticulator::store::InMemoryStore::new();
+                let n = match store.persist(&lattice) {
+                    Ok(n) => n,
+                    // InMemoryStore is Infallible — this arm is unreachable.
+                    Err(never) => match never {},
+                };
+                println!("📦 persisted {n} nodes to the in-memory store (target: {db})");
+            }
+            println!("✅ done.");
         }
         Commands::Query { zoom, db } => {
             println!("🔍 Querying lattice for context: {}", zoom);

@@ -22,38 +22,38 @@ db = "verisim standalone (HTTP client; octad store); no federation unless needed
 name = "git-reticulator"
 purpose = "Semantic-lattice builder for git repositories: the symbolic half of a neuro-symbolic (Graph-RAG, proof-carrying retrieval) stack."
 primary-language = "rust"          # host: CLI + REST shell
-core-language = "affinescript"     # intended lattice core (src/lattice/affine/*.affine)
-completion-percentage = 15
+core-language = "affinescript"     # intended core (future, ADR-006); Rust reference core today
+completion-percentage = 35
 
 [position]
-phase = "design+skeleton"   # design | skeleton | implementation | testing | maintenance
+phase = "implementation"   # design | skeleton | implementation | testing | maintenance
 maturity = "experimental"   # experimental | alpha | beta | production | lts
 
 # ════════════════════════════════════════════════════════════════════════════
 # HONEST STATUS — what is real vs. what is claimed
 # ════════════════════════════════════════════════════════════════════════════
 [honest-status]
-rust-host-loc = 237                 # src/{lib.rs,cli/main.rs,api/app.rs}
-rust-host-reality = "build_lattice/query_lattice are println! stubs; actix routes return canned JSON"
-affine-core-loc = "~100 (models/storage/lattice.affine)"
-affine-core-reality = "ASPIRATIONAL — AffineScript has no working compiler yet; these files cannot build, and as written they call Rust crates (git2/postgres) which AffineScript does not bind"
-git-parsing = "NOT WIRED (git2 feature off by default; .affine calls git2 but cannot run)"
+lattice-engine = "REAL (src/lattice/mod.rs): Kosaraju SCC-condensation + partial order + LOD zoom (sound+complete) + meet (LCA). cargo green; 10 property/unit tests."
+ingest = "REAL but filesystem-only (src/ingest.rs, std-only, fail-soft). git2 HISTORY ingest NOT yet wired."
+store = "REAL: LatticeStore trait + InMemoryStore default; VeriSimDB octad backend over HTTP behind --features verisim (src/store.rs). Not yet wired into CLI/REST."
+host-reality = "CLI/REST still thin; the compat affine::{build_lattice,query_lattice} shim is now IO-free (no more println-only stubs)."
 embeddings = "NOT WIRED (tch/PyTorch feature off by default)"
-persistence = "NOT WIRED (postgres feature off by default)"
-proofs = "ZERO (no .idr/.v/.lean/.agda). The 'lattice' noun is currently unearned — see PROOF-NEEDS.md"
-test-reality = "27 tests pass but they assert 'does not panic' over println stubs; honest as smoke tests, overstated as a 7-category pyramid"
+affine-core = "DEFERRED (ADR-006 bridge-first): the Rust engine is the reference core; the .affine core lands after the Rust↔AffineScript bridge."
+proofs = "ZERO mechanized (no .idr/.v/.ads). P2a/P4/P1b are TESTED not proved — see PROOF-NEEDS.md 'Proof status'. 'lattice' = meet-semilattice + digraph (full join not claimed)."
+rust-spark = "Stance documented (docs/decisions/rust-spark-stance.adoc) + spark-theatre-gate.yml added (lenient). Idris2/Zig ABI seam N/A until an FFI surface exists."
+tests = "30 pass (10 new lattice/ingest/store + 20 compat integration/property/api). cargo test exit 0."
 
 [crg]
 grade = "C"
 achieved = "2026-04-04"
-caveat = "Grade C reflects test-CATEGORY presence, not behavioural coverage of real lattice logic (none exists yet). See READINESS.md + TEST-NEEDS.md."
+caveat = "Superseded 2026-06-04: the lattice engine is real and its properties are tested (P2a/P4/P1b). Mechanized proofs still owed (PROOF-NEEDS.md). See READINESS.md + TEST-NEEDS.md."
 next = "Grade B requires 6 quality targets (lint/fmt/doc-coverage/etc.)"
 
 [blockers-and-issues]
 blockers = [
-  "affinescript-runtime path dep unresolvable without sibling repo (severity: low; feature-gated off)",
-  "the .affine core cannot compile (AffineScript compiler not ready) AND is written against Rust crates it cannot bind (severity: high; design rethink needed)",
-  "'lattice' is currently a typed DAG with no proven meet/join (severity: medium; see PROOF-NEEDS.md)",
+  "RESOLVED 2026-06-04: removed the unresolvable affinescript-runtime path dep from Cargo.toml (cargo build now green); re-add as git/published dep when the bridge lands (ADR-006)",
+  "Deliverable 1 (Rust↔AffineScript bridge, in affinescript repo) blocks the .affine core migration (severity: high; docs/MIGRATION-PLAN.adoc)",
+  "'lattice' is a meet-semilattice + digraph; meet/zoom tested not proved (severity: medium; PROOF-NEEDS.md)",
 ]
 template-debt = [
   "RESOLVED 2026-06-03: 0-AI-MANIFEST.a2ml had [YOUR-REPO-NAME]/{{AUTHOR}} placeholders",
@@ -70,7 +70,7 @@ template-debt = [
 # Core-language question DECIDED 2026-06-04 (ADR-006): AffineScript-first, bridge-first.
 actions = [
   "DELIVERABLE 1 (in affinescript repo, runtime/): build the Rust loader + marshalling for compiled AffineScript — the affine-js equivalent for Rust. Acceptance: a Rust test loads a compiled .affine fn, calls it, round-trips a string via a host extern fn. See docs/MIGRATION-PLAN.adoc.",
-  "DELIVERABLE 2 (here, once 1 lands): thin Rust host (git2 + verisim HTTP DB + actix) + pure .affine lattice core over Wasm, behind a `trait LatticeCore` seam.",
+  "LANDED 2026-06-04: Rust reference lattice core (SCC-condensation + partial order + LOD zoom + meet) + filesystem ingest + verisim store seam + 10 tests; cargo green; Rust/SPARK stance + spark-theatre-gate added. NEXT here: wire CLI/REST to ingest→lattice→store, add criterion benches, git2 history ingest.",
   "Earn the 'lattice' word: SCC-condensation + partial order in the core, then discharge PROOF-NEEDS.md P1-P2 (Idris2).",
   "Tests/benches: replace smoke-over-stubs with property tests (partial-order laws, zoom soundness/completeness) + criterion benches; strict-but-passable CI with an AffineScript compile gate.",
 ]
