@@ -38,6 +38,22 @@ enum Commands {
     },
 }
 
+/// Ingest a repository into a lattice. With `--features git-integration` this is
+/// git-aware (HEAD tree + commit-history coupling), falling back to a filesystem
+/// walk when `repo` is not a git repository; otherwise it is always a walk.
+#[cfg(feature = "git-integration")]
+fn reticulate_ingest(repo: &str) -> git_reticulator::lattice::Lattice {
+    match git_reticulator::ingest::from_git(repo) {
+        Ok(lattice) => lattice,
+        Err(_) => git_reticulator::ingest::from_path(repo),
+    }
+}
+
+#[cfg(not(feature = "git-integration"))]
+fn reticulate_ingest(repo: &str) -> git_reticulator::lattice::Lattice {
+    git_reticulator::ingest::from_path(repo)
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -46,7 +62,7 @@ async fn main() {
     match &cli.command {
         Commands::Build { repo, db } => {
             println!("🚀 Reticulating {repo} ...");
-            let lattice = git_reticulator::ingest::from_path(repo);
+            let lattice = reticulate_ingest(repo);
             let cond = lattice.condense();
             println!(
                 "   {} nodes · {} edges · {} components · acyclic={}",
