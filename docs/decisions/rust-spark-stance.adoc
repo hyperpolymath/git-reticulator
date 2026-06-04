@@ -50,8 +50,8 @@ digraph whose SCC-condensation is a partial order.
 
 == The seam (not yet present — and where it will go)
 
-There is no `src/abi/*.idr` / `ffi/zig/` seam today because git-reticulator
-exposes no C ABI. The seam will appear at the **AffineScript→Wasm boundary**
+There is no Idris2-typed ABI seam or Zig FFI layer today (no boundary `*.idr`
+modules, no FFI crate) because git-reticulator exposes no C ABI. The seam will appear at the **AffineScript→Wasm boundary**
 once the migration (ADR-006) lands: the pure lattice core moves to
 AffineScript compiled to Wasm, the Rust host provides IO via `extern fn`
 host imports, and *that* typed boundary (AffineScript's own type discipline,

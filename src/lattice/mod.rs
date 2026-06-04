@@ -196,7 +196,12 @@ impl Lattice {
             let mut stack: Vec<(usize, usize)> = vec![(start, 0)];
             while let Some(&(u, i)) = stack.last() {
                 if i < adj[u].len() {
-                    stack.last_mut().unwrap().1 += 1;
+                    // Advance the cursor on the current frame without unwrap():
+                    // the frame is guaranteed present (stack.last() just
+                    // matched), but we avoid an unguarded panic site (CWE-754).
+                    if let Some(top) = stack.last_mut() {
+                        top.1 += 1;
+                    }
                     let v = adj[u][i];
                     if !visited[v] {
                         visited[v] = true;
