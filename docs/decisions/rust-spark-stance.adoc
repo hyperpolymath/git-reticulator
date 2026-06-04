@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Rust/SPARK Stance — git-reticulator
+:toc: macro
+:toclevels: 2
+
+toc::[]
+
+== Summary
+
+git-reticulator's application logic is written in Rust. Per the estate
+language policy (`standards/.../LANGUAGE-POLICY.adoc` §Terminology),
+*"Rust" means "Rust/SPARK"*: Rust is the primary implementation language
+now, but a repo must be *designed to admit SPARK/Ada verification modules*
+across a stable, Idris2-typed boundary, with Zig as the FFI layer — and
+**Rust is never the ABI/API/FFI layer**.
+
+This document records the stance honestly. git-reticulator is at an
+*earlier* stage than the exemplar (verisimdb): it is currently a CLI + REST
+**application** plus a pure, dependency-free lattice **engine**, and it
+does **not yet expose a C ABI**. The Idris2-typed seam + Zig FFI therefore
+do not exist yet — not as a hidden gap, but because there is no FFI surface
+to put them on. This document says so, and says where the seam *will* go.
+
+== What is correctness-critical here
+
+git-reticulator is a retrieval-geometry engine, not a ledger. The
+correctness-critical surface is the lattice algebra.
+
+[cols="1,3",options="header"]
+|===
+| Critical surface | Where | Status
+
+| SCC condensation is acyclic (a real partial order exists)
+| `src/lattice/mod.rs` — `Lattice::condense`, `Condensation::is_acyclic`
+| implemented + unit-tested; *not* mechanically proved (PROOF-NEEDS P2)
+
+| LOD `zoom` soundness + completeness (no spurious/dropped context)
+| `src/lattice/mod.rs` — `Lattice::zoom`
+| implemented + unit-tested; *not* proved (PROOF-NEEDS P4)
+
+| `meet` = lowest common ancestor (meet-semilattice fragment)
+| `src/lattice/mod.rs` — `Lattice::meet`
+| implemented + unit-tested; *not* proved (PROOF-NEEDS P1b)
+|===
+
+NOTE: full lattice `join` is **not** claimed — see PROOF-NEEDS.md. The
+structure is a meet-semilattice over the containment forest plus a typed
+digraph whose SCC-condensation is a partial order.
+
+== The seam (not yet present — and where it will go)
+
+There is no `src/abi/*.idr` / `ffi/zig/` seam today because git-reticulator
+exposes no C ABI. The seam will appear at the **AffineScript→Wasm boundary**
+once the migration (ADR-006) lands: the pure lattice core moves to
+AffineScript compiled to Wasm, the Rust host provides IO via `extern fn`
+host imports, and *that* typed boundary (AffineScript's own type discipline,
+with an Idris2/SPARK admission path on the host side) is where verification
+attaches. Until then, the honest status is **N/A — no FFI surface**.
+
+== SPARK/Ada admission path
+
+Deferred. No SPARK/Ada code exists. When a correctness-critical component
+(e.g. the condensation/zoom kernel) warrants it, it can be re-implemented in
+SPARK/Ada behind the future Wasm/C-ABI contract without redesigning the host
+— which is what §Terminology requires of a "designed to admit SPARK/Ada"
+Rust project.
+
+== Honest gaps
+
+* **Zero mechanized proofs.** No `.idr`/`.ads`/`.v` proof files. The
+  lattice obligations are *tested, not proved*; Idris2 is recommended
+  (PROOF-NEEDS.md) but not wired into CI. "Zero proof escapes" here is
+  vacuous (there are no proofs to escape from) — it is **not** the
+  vcl-ut-grade "zero `believe_me` in a real corpus" achievement.
+* The verifiable core is **migrating to AffineScript** (ADR-006), which is
+  itself alpha with a known soundness gap (CORE-01).
+* The `spark-theatre-gate` runs in **lenient mode**
+  (`enforce_zero_contract: false`) — appropriate for this stage; tighten
+  when a real ABI seam + proofs exist.
+
+== References
+
+* Estate exemplar: `verisimdb/docs/decisions/rust-spark-stance.adoc`
+* This repo's obligations: `PROOF-NEEDS.md`
+* Migration that introduces the seam: `docs/MIGRATION-PLAN.adoc`, META ADR-006
