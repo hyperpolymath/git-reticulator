@@ -8,8 +8,15 @@
 [metadata]
 project = "git-reticulator"
 version = "0.1.0"
-last-updated = "2026-06-03"
-status = "paused-resumed"   # was on backburner; resumed 2026-06-03 for a tidy-up pass
+last-updated = "2026-06-04"
+status = "active"   # tidy-up merged (PR #23); migration direction decided 2026-06-04
+
+[migration-decision]
+date = "2026-06-04"
+decision = "AffineScript-first, build the Rust↔AffineScript bridge FIRST (ADR-006)"
+bridge-lives-in = "hyperpolymath/affinescript (runtime/) — NOT this repo"
+handoff-doc = "docs/MIGRATION-PLAN.adoc"
+db = "verisim standalone (HTTP client; octad store); no federation unless needed"
 
 [project-context]
 name = "git-reticulator"
@@ -60,11 +67,12 @@ template-debt = [
 ]
 
 [critical-next-actions]
+# Core-language question DECIDED 2026-06-04 (ADR-006): AffineScript-first, bridge-first.
 actions = [
-  "DECIDE the core-language question: either (a) make the lattice core real in Rust (wire git2, drop the un-compilable .affine), or (b) wait for AffineScript and rewrite the .affine to compile to Wasm without Rust-crate calls",
-  "Earn the 'lattice' word: implement SCC-condensation + a partial order, then discharge PROOF-NEEDS.md P1-P2 (Idris2)",
-  "Wire git2 behind the default feature so reticulate actually reads a repo",
-  "Replace println stubs with a real (even in-memory) lattice build + a test that asserts a lattice PROPERTY, not just no-panic",
+  "DELIVERABLE 1 (in affinescript repo, runtime/): build the Rust loader + marshalling for compiled AffineScript — the affine-js equivalent for Rust. Acceptance: a Rust test loads a compiled .affine fn, calls it, round-trips a string via a host extern fn. See docs/MIGRATION-PLAN.adoc.",
+  "DELIVERABLE 2 (here, once 1 lands): thin Rust host (git2 + verisim HTTP DB + actix) + pure .affine lattice core over Wasm, behind a `trait LatticeCore` seam.",
+  "Earn the 'lattice' word: SCC-condensation + partial order in the core, then discharge PROOF-NEEDS.md P1-P2 (Idris2).",
+  "Tests/benches: replace smoke-over-stubs with property tests (partial-order laws, zoom soundness/completeness) + criterion benches; strict-but-passable CI with an AffineScript compile gate.",
 ]
 
 [ecosystem]

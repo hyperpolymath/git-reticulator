@@ -26,10 +26,19 @@ package-manager = "cargo"     # guix.scm / flake.nix also present for reproducib
 [[adr]]
 id = "ADR-001"
 title = "Rust host, AffineScript core"
-status = "accepted-but-under-review"
+status = "accepted"
 date = "2026-04"
-decision = "CLI/REST/IO in Rust; lattice algorithms in AffineScript (.affine) for affine-typed safe traversal."
-consequence = "Today the core cannot compile (no AffineScript compiler) and is written against Rust crates AffineScript cannot bind. STATE.honest-status flags this; ADR may be superseded by a Rust-native core."
+resolved = "2026-06-04"
+decision = "CLI/REST/IO in Rust; the PURE lattice algorithm in AffineScript (.affine) compiled to Wasm. IO is host-side, exposed to the core as `extern fn` host imports — NOT direct Rust-crate calls (AffineScript is Wasm-sandboxed)."
+consequence = "The old src/lattice/affine/*.affine (which called git2/postgres directly) is invalid and must be rewritten pure. AffineScript-first is confirmed as the target; sequencing is governed by ADR-006."
+
+[[adr]]
+id = "ADR-006"
+title = "Build the Rust↔AffineScript bridge before migrating the core"
+status = "accepted"
+date = "2026-06-04"
+decision = "Do NOT migrate git-reticulator's core to .affine yet. First build the missing Rust loader/marshalling for compiled AffineScript (the affine-js equivalent for Rust) in the affinescript repo's runtime/. Then migrate git-reticulator onto it behind a `trait LatticeCore` seam."
+rationale = "AffineScript's compiler works (→Wasm) but the Rust host bridge does not exist: affinescript-runtime is ~80% Phase-6 stubs, no Rust loader/marshalling, alpha + CORE-01 soundness gap. The bridge is an affinescript-repo deliverable; git-reticulator is its first consumer. Full handoff in docs/MIGRATION-PLAN.adoc."
 
 [[adr]]
 id = "ADR-002"
