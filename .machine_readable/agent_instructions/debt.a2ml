@@ -52,10 +52,11 @@ last-updated = "2026-06-03"
 
 [[debt.should]]
 component = "src/lattice/affine"
-issue = "Core .affine cannot compile and calls Rust crates AffineScript can't bind — decide Rust-native core vs wait-for-AffineScript (META ADR-001)."
+issue = "DECIDED 2026-06-04 (ADR-006): AffineScript-first, bridge-first. Blocked on Deliverable 1 — the Rust↔AffineScript loader/marshalling bridge in the affinescript repo (runtime/), which does not exist yet (Phase-6 stubs, no Rust loader). The old .affine (calls git2/postgres directly) is invalid and will be rewritten pure once the bridge lands. Full plan: docs/MIGRATION-PLAN.adoc."
 effort = "hard"
 impact = "high"
 discovered = "2026-06-03"
+updated = "2026-06-04"
 
 [[debt.should]]
 component = "contractiles"
