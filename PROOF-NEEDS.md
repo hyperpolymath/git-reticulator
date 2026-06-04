@@ -5,8 +5,11 @@
 ## Current State
 
 - **LOC**: ~237 Rust (host) + ~100 AffineScript (`.affine`, not compilable).
-- **Existing proofs**: **NONE.** No `*.idr`, `*.v`, `*.lean`, `*.agda`, `*.fst`,
-  `*.tla`, `*.ads`. The 2026-05-26 estate tech-debt audit recorded
+- **Existing proofs**: **first corpus landed (2026-06-04)** —
+  `verification/proofs/Lattice/Order.idr` (Idris2 0.8.0, `%default total`, zero
+  proof escapes), CI-gated by `.github/workflows/proof-corpus.yml`. It proves the
+  *abstract* order theory, **not yet** bound to the Rust graph (see below). Before
+  this there were zero proofs. The 2026-05-26 estate tech-debt audit recorded
   "Proof debt: none / Recommended next move: none" — that verdict is **wrong**
   for a project whose headline noun is *lattice*. A lattice is a mathematical
   claim with discharge obligations; asserting it without proof is exactly the
@@ -36,6 +39,15 @@ Honest categorisation. **Proved** = mechanically checked (Idris2/Coq/SPARK).
 (`src/lattice/mod.rs`) — a rung *below* proof. git-reticulator has **zero
 mechanized proofs**; what exists is tested.
 
+### Done (mechanized — first corpus, 2026-06-04)
+- **Abstract order theory** (`verification/proofs/Lattice/Order.idr`, Idris2 0.8.0,
+  `%default total`, zero proof escapes; CI-gated by `proof-corpus.yml`): the
+  partial-order laws are witnessed (`natOrder`: reflexive + transitive +
+  antisymmetric) and **antisymmetry ⇒ no 2-cycle** (`noTwoCycle`) is proved — the
+  order-theoretic heart of why the SCC condensation is a DAG (**P2a**). **Scope
+  honesty:** proved on an *abstract* `PartialOrder`, **not yet** on the actual Rust
+  graph in `src/lattice/mod.rs`; binding the two is the ADR-006 Idris2 ABI seam.
+
 ### Done (tested, not proved)
 - **P2a** SCC condensation is acyclic — `Condensation::is_acyclic` (Kahn
   topological sort, a genuine runtime check, not a trust assertion) + tests
@@ -60,7 +72,9 @@ mechanized proofs**; what exists is tested.
   is zero-because-empty. Recorded so it is never mistaken for rigour we lack.
 
 ### Structural blockers
-- No prover wired (Idris2 recommended, absent; no proof-corpus CI gate).
+- Idris2 prover **now wired** (`verification/proofs/` + `proof-corpus.yml`, idris2
+  0.8.0); first module verified. Remaining: bind the proofs to the Rust graph and
+  discharge the rest of P1–P7.
 - The verifiable core is migrating to AffineScript (ADR-006), itself alpha with
   the CORE-01 soundness gap.
 - The Rust/SPARK Idris2/Zig ABI seam is **N/A until git-reticulator exposes an

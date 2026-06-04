@@ -1,0 +1,14 @@
+package git-reticulator-proofs
+
+-- SPDX-License-Identifier: MPL-2.0
+-- git-reticulator Idris2 proof corpus. First mechanized proofs (PROOF-NEEDS.md):
+-- elementary order theory (P1a witnessed, P2a essence) for the lattice core.
+-- %default total, zero proof-escape symbols — matches the vcl-ut corpus bar.
+
+version = 0.1.0
+authors = "Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
+brief   = "git-reticulator order-theory proof corpus (P1a/P2a)"
+license = "MPL-2.0"
+
+sourcedir = "."
+modules = Lattice.Order
