@@ -37,7 +37,7 @@ http-client = ["reqwest"]                 # HTTP client for external calls
 full = ["verisim", "git-integration", "db", "embeddings", "http-client"]
 
 [dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }   # Benchmarks
+criterion = { version = "0.8", features = ["html_reports"] }   # Benchmarks
 proptest = "1"                                                  # Property-based testing
 
 [lib]
