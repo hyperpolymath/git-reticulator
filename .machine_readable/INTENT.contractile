@@ -35,38 +35,34 @@
 
   ; === Purpose (what this repo IS) ===
   (purpose
-    "{{ONE_PARAGRAPH_PURPOSE}}"
+    "git-reticulator turns a git repo into a typed, hierarchical, embeddable structure (LOD lattice of keyword nodes + typed weighted edges) for token-bounded, eventually proof-carrying LLM retrieval. Layer 1 of a neuro-symbolic stack: reticulator -> RAG -> verisim octad -> vcl-ut proofs."
   )
 
   ; === Anti-Purpose (what this repo is NOT — prevents scope creep) ===
   (anti-purpose
-    "{{ONE_PARAGRAPH_ANTI_PURPOSE}}"
-    ; Examples:
-    ; "This is NOT a general-purpose database — it solves one specific problem."
-    ; "This is NOT a framework — it is a library with a focused API."
-    ; "This does NOT handle authentication — that is delegated to [other repo]."
+    "NOT a git-statistics/blame tool (it is a retrieval geometry, not analytics). NOT a vector database (vectors at scale are verisim's Vector modality). NOT a proof system (proofs, when they land, are Idris2 per PROOF-NEEDS.md). NOT a fork/wrapper; NOT a monorepo."
   )
 
   ; === Key Architectural Decisions That Must Not Be Reversed ===
   (architectural-invariants
-    ; *REMINDER: List the foundational decisions*
-    ; ("Idris2 for ABI definitions — dependent types prove interface correctness")
-    ; ("Zig for FFI — zero-cost C ABI compatibility")
-    ; ("Elixir for supervision — OTP fault tolerance")
+    ("LOD lattice over four SemanticLevels with parent_id (META ADR-002)")
+    ("Per-node embedding — the neuro-symbolic fusion point (META ADR-003)")
+    ("'lattice' is earned, not asserted — see PROOF-NEEDS.md P1/P2 (META ADR-005)")
+    ("Honesty legend IMPLEMENTED|SKELETON|ASPIRATIONAL in all docs")
   )
 
   ; === Sensitive Areas (if in doubt, ask) ===
   (ask-before-touching
-    ; *REMINDER: List areas where LLMs should check before modifying*
-    ; "src/abi/ — formal proofs, changes require re-verification"
-    ; "ffi/zig/ — C ABI boundary, changes affect all language bindings"
-    ; ".machine_readable/ — checkpoint files, format is specified"
+    "src/lattice/affine/ — core model; changes ripple into every downstream layer and PROOF-NEEDS obligations"
+    "Cargo.toml features — git-integration/db/embeddings gate real behaviour"
+    ".machine_readable/6a2/ — canonical state, format specified"
+    "CI workflows, license headers"
   )
 
   ; === Ecosystem Position ===
   (ecosystem
-    (belongs-to "{{MONOREPO_OR_STANDALONE}}")
-    (depends-on ("{{DEP1}}" "{{DEP2}}"))
-    (depended-on-by ("{{CONSUMER1}}" "{{CONSUMER2}}"))
+    (belongs-to "standalone (hyperpolymath neuro-symbolic stack)")
+    (depends-on ("affinescript" "k9"))
+    (depended-on-by ("verisim" "vcl-ut" "LLM/RAG consumers"))
   )
 )

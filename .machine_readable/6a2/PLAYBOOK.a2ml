@@ -1,0 +1,118 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# PLAYBOOK.a2ml — Operational playbook for git-reticulator
+#
+# Two parts:
+#   1. NEURO-SYMBOLIC PLAYBOOKS — the use-cases this repo exists to enable.
+#      Each is marked with the layers it needs (see NEUROSYM.a2ml stack).
+#   2. OPS RUNBOOK — build/test/release/incident procedures (concrete, today).
+
+[metadata]
+version = "0.2.0"
+last-updated = "2026-06-03"
+
+# ════════════════════════════════════════════════════════════════════════════
+# PART 1 — NEURO-SYMBOLIC PLAYBOOKS
+# ════════════════════════════════════════════════════════════════════════════
+# Status: all five are ASPIRATIONAL until layer-1 (.affine core) compiles and
+# git2 is wired. They are listed so design work has a target, not because they
+# run today.
+
+[[playbook]]
+id = "PB-1"
+name = "Repo archaeology / onboarding"
+question = "When did this concept enter the codebase, and who owns it?"
+needs-layers = ["reticulator", "verisim(temporal+provenance)", "vcl-ut(PROVENANCE proof)"]
+flow = [
+  "reticulate the repo -> lattice with temporal + provenance modalities populated",
+  "vcl-ut query: INSPECT concept WITH temporal trajectory PROOF PROVENANCE",
+  "LLM explains the history with citations that each carry a provenance certificate",
+]
+value = "an onboarding dev (or an auditor reconstructing a decision) gets answers that are checkable, not vibes"
+
+[[playbook]]
+id = "PB-2"
+name = "Proof-carrying Graph-RAG code assistant"
+question = "Answer my question about this codebase without hallucinating or citing dead code."
+needs-layers = ["reticulator(LOD zoom)", "rag(embeddings)", "vcl-ut(FRESHNESS+EXISTENCE proof)"]
+flow = [
+  "embedding search finds candidate nodes",
+  "zoom_to_node bounds the context to the relevant sub-lattice (token budget)",
+  "vcl-ut attaches FRESHNESS proof: every cited line provably exists at HEAD",
+  "assistant answers; any context that fails FRESHNESS is dropped, not shown",
+]
+value = "neutralises RAG's two killers — hallucinated citations and stale context — the things that block RAG in regulated domains"
+this-is-the-flagship = true
+
+[[playbook]]
+id = "PB-3"
+name = "Drift / staleness sentinel"
+question = "Has the index gone stale relative to the code?"
+needs-layers = ["reticulator", "verisim(drift detection + self-normalization)"]
+flow = [
+  "verisim watches (lattice <-> embeddings <-> current HEAD)",
+  "code changes but index lags -> drift event fires",
+  "self-normalization re-runs reticulate on the affected sub-lattice only",
+]
+value = "keeps every downstream RAG honest over time; maps directly onto verisim's existing drift machinery"
+
+[[playbook]]
+id = "PB-4"
+name = "Refactoring-impact / security blast-radius"
+question = "What is reachable from this function / this vulnerability?"
+needs-layers = ["reticulator(pgRouting Dijkstra/A* over weighted edges)"]
+flow = [
+  "pgr_createTopology builds the routable graph (storage.affine already calls it)",
+  "shortest/all-paths from the changed (or vulnerable) node",
+  "feed the reachable set to Hypatia / panic-attack for targeted scanning",
+]
+value = "explainable impact analysis; ties into the estate's existing security scanners"
+
+[[playbook]]
+id = "PB-5"
+name = "Cross-repo estate intelligence"
+question = "Where else in the ~290 repos does this pattern live?"
+needs-layers = ["reticulator(batch)", "verisim(verisimdb-data flat-file store)"]
+flow = [
+  "run reticulate over each repo in CI",
+  "push lattices to verisimdb-data (the git-backed store already designed in verisimdb)",
+  "query the union for 'this pattern, with provenance, across the estate'",
+]
+value = "dovetails with verisimdb's documented GitHub-CI flat-file architecture"
+
+# ════════════════════════════════════════════════════════════════════════════
+# PART 2 — OPS RUNBOOK (concrete, today)
+# ════════════════════════════════════════════════════════════════════════════
+
+[deployment]
+method = "library + CLI binary"     # not a long-running service yet
+target = "binary"                   # `reticulate` (src/cli/main.rs)
+notes = "the actix `api` subcommand exists but serves stub responses; do not deploy as a service yet"
+
+[build]
+commands = [
+  "just build         # cargo build (default features only — no git2/postgres/tch)",
+  "just test          # cargo test (27 smoke/contract tests over the Rust host)",
+  "cargo build --features full   # ASPIRATIONAL: pulls git2/postgres/tch/affinescript — currently will not resolve (affinescript path dep absent)",
+]
+
+[incident-response]
+steps = [
+  "1. Read .machine_readable/6a2/STATE.a2ml for current honest status",
+  "2. Review recent commits and CI (rust-ci.yml, governance.yml, hypatia-scan.yml)",
+  "3. just doctor   # toolchain health",
+  "4. just must-check && just trust-verify   # contractile gates",
+]
+
+[release-process]
+steps = [
+  "1. Update version + last-updated in 6a2/STATE.a2ml and 6a2/META.a2ml",
+  "2. just must-check && just trust-verify",
+  "3. just assail   # panic-attack scan (if installed)",
+  "4. Tag and push (GPG-signed commits required per CONTRIBUTING.md)",
+]
+
+[maintenance-operations]
+crg-grade = "just crg-grade   # reads READINESS.md '**Current Grade:** X'"
+contractile-checks = "just must-check ; just trust-verify ; just intend-list ; just dust-status"

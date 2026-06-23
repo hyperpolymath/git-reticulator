@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# META.a2ml — Architecture decisions and design rationale for git-reticulator.
+
+[metadata]
+version = "0.2.0"
+last-updated = "2026-06-03"
+
+[project-info]
+type = "library + cli"        # library (git_reticulator) + binary (reticulate)
+languages = ["rust", "affinescript"]
+license = "MPL-2.0"
+author = "Jonathan D.A. Jewell (hyperpolymath)"
+
+[development-practices]
+build-tool = "just"
+container-runtime = "podman"
+ci-platform = "github-actions"
+package-manager = "cargo"     # guix.scm / flake.nix also present for reproducible shells
+
+# ════════════════════════════════════════════════════════════════════════════
+# ARCHITECTURE DECISIONS (ADRs) — status: proposed | accepted | superseded | rejected
+# ════════════════════════════════════════════════════════════════════════════
+
+[[adr]]
+id = "ADR-001"
+title = "Rust host, AffineScript core"
+status = "accepted"
+date = "2026-04"
+resolved = "2026-06-04"
+decision = "CLI/REST/IO in Rust; the PURE lattice algorithm in AffineScript (.affine) compiled to Wasm. IO is host-side, exposed to the core as `extern fn` host imports — NOT direct Rust-crate calls (AffineScript is Wasm-sandboxed)."
+consequence = "The old src/lattice/affine/*.affine (which called git2/postgres directly) is invalid and must be rewritten pure. AffineScript-first is confirmed as the target; sequencing is governed by ADR-006."
+
+[[adr]]
+id = "ADR-006"
+title = "Build the Rust↔AffineScript bridge before migrating the core"
+status = "accepted"
+date = "2026-06-04"
+decision = "Do NOT migrate git-reticulator's core to .affine yet. First build the missing Rust loader/marshalling for compiled AffineScript (the affine-js equivalent for Rust) in the affinescript repo's runtime/. Then migrate git-reticulator onto it behind a `trait LatticeCore` seam."
+rationale = "AffineScript's compiler works (→Wasm) but the Rust host bridge does not exist: affinescript-runtime is ~80% Phase-6 stubs, no Rust loader/marshalling, alpha + CORE-01 soundness gap. The bridge is an affinescript-repo deliverable; git-reticulator is its first consumer. Full handoff in docs/MIGRATION-PLAN.adoc."
+
+[[adr]]
+id = "ADR-002"
+title = "Level-of-Detail (LOD) lattice over four semantic levels"
+status = "accepted"
+date = "2026-04"
+decision = "Nodes carry a SemanticLevel (Module>File>Definition>Block) and a parent_id, so zoom_to_node can return a token-bounded sub-lattice."
+rationale = "The product is a RETRIEVAL GEOMETRY for LLMs — minimal relevant context, not a full dump. This is the feature that justifies the project over `git log`."
+
+[[adr]]
+id = "ADR-003"
+title = "Per-node embedding (neuro-symbolic fusion at the data model)"
+status = "accepted"
+date = "2026-04"
+decision = "Keyword carries an optional embedding vector alongside its order position."
+rationale = "One identity = one lattice element + one vector. This is the seam where symbolic and neural meet (see NEUROSYM.a2ml)."
+
+[[adr]]
+id = "ADR-004"
+title = "PostgreSQL + pgRouting for persistence and pathfinding"
+status = "accepted"
+date = "2026-04"
+decision = "Store nodes/edges in Postgres; use pgRouting (Dijkstra/A*) for reachability and blast-radius queries."
+rationale = "Weighted reachability is a first-class query (refactoring impact, security blast-radius — PLAYBOOK PB-4). pgRouting gives it for free."
+caveat = "feature-gated off; not yet wired."
+
+[[adr]]
+id = "ADR-005"
+title = "'Lattice' must be earned, not asserted"
+status = "accepted"
+date = "2026-06-03"
+decision = "The structure is currently a typed weighted DAG/digraph (TOPOLOGY even notes cycle detection). To call it a lattice we must (a) SCC-condense to a DAG, (b) define a partial order, (c) prove meet/join exist + the lattice laws."
+rationale = "Honesty + the formal-methods estate norm (cf. vcl-ut). Tracked in PROOF-NEEDS.md."
+
+[design-rationale]
+why-this-exists = "Existing git tools work at raw commit/blob level; git-reticulator lifts analysis to a semantic, navigable, embeddable structure suited to feeding LLMs cheaply and provably."
+positioning = "layer 1 of a four-layer neuro-symbolic stack (reticulator -> RAG -> verisim octad -> vcl-ut proofs); see NEUROSYM.a2ml"
+
+[maintenance-axes]
+scoping-first = true
+axis-1 = "must > intend > like"
+axis-2 = "corrective > adaptive > perfective"
+axis-3 = "systems > compliance > effects"

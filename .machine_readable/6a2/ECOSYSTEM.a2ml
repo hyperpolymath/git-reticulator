@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# ECOSYSTEM.a2ml — git-reticulator's position and relationships.
+
+[metadata]
+version = "0.2.0"
+last-updated = "2026-06-03"
+
+[project]
+name = "git-reticulator"
+purpose = "Symbolic-lattice + embedding extractor for git repos; layer 1 of the neuro-symbolic retrieval stack."
+role = "library + cli (structure extractor / RAG context provider)"
+
+[position-in-ecosystem]
+tier = "2"               # 1 = foundational language/proof; 2 = tooling/application; infrastructure = scaffolding
+neuro-symbolic-layer = 1
+
+# relationship types: dependency, dependent, sibling, substrate, proof-layer,
+#                     potential-consumer, inspiration
+[[related-projects.project]]
+name = "affinescript"
+relationship = "core-language + sibling"
+contract = "intended implementation language of the lattice core (src/lattice/affine/*.affine); compiles to Wasm. NOTE: not yet a working compiler, and the current .affine calls Rust crates it cannot bind."
+
+[[related-projects.project]]
+name = "verisimdb"
+relationship = "substrate (downstream)"
+contract = "the octad (8 modalities) is a superset of reticulator's needs: Graph<-lattice, Vector<-embeddings, Document<-source, Temporal<-history, Provenance<-authorship, Semantic<-type tags. reticulator is, in effect, a specialised ingester producing verisim octads."
+
+[[related-projects.project]]
+name = "vcl-ut"
+relationship = "proof-layer (downstream)"
+contract = "typed, proof-carrying query language over verisim. Turns reticulator retrieval into PROPOSITIONS carrying PROVENANCE/FRESHNESS/EXISTENCE certificates — the basis of proof-carrying retrieval (NEUROSYM stack layer 4)."
+
+[[related-projects.project]]
+name = "k9"
+relationship = "dependency (metadata tooling)"
+contract = "k9iser.toml is consumed here; K9 contracts machine-check MUST constraints."
+
+[[related-projects.project]]
+name = "hypatia / panic-attack"
+relationship = "potential-consumer"
+contract = "security/quality scanners; PB-4 feeds them a reachable-set (blast radius) from the lattice. Hypatia also scans this repo (hypatia-scan.yml)."
+
+[[related-projects.project]]
+name = "standards"
+relationship = "sibling-standard"
+contract = "estate standards, CRG grading, changelog-reusable.yml, contractile/RSR conventions."
+
+[[related-projects.project]]
+name = "LLM / RAG agents"
+relationship = "primary-consumer"
+contract = "consume zoom_to_node sub-lattices as token-bounded, (eventually) proof-carrying context."
+
+[integration-points]
+# system, direction, protocol
+points = [
+  { system = "verisimdb-data", direction = "outbound", protocol = "git-backed flat-file / repository_dispatch (PB-5)" },
+  { system = "postgres+pgRouting", direction = "outbound", protocol = "SQL (ASPIRATIONAL, feature-gated)" },
+  { system = "REST consumers", direction = "inbound", protocol = "actix-web /build /zoom /health (stub responses today)" },
+]

@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# AGENTIC.a2ml — AI agent interaction patterns for git-reticulator.
+
+[metadata]
+version = "0.2.0"
+last-updated = "2026-06-03"
+
+[agent-permissions]
+can-edit-source = true
+can-edit-tests = true
+can-edit-docs = true
+can-edit-config = true
+can-create-files = true
+
+[agent-constraints]
+rules = [
+  "HONESTY FIRST: never document a SKELETON/println stub as a working feature. Use the NEUROSYM status legend (IMPLEMENTED|SKELETON|ASPIRATIONAL).",
+  "Do not assert 'lattice' algebra (meet/join) anywhere unless PROOF-NEEDS.md P1 is discharged — otherwise say 'typed graph/DAG'.",
+  "Never reintroduce template placeholders ({{...}}, [YOUR-REPO-NAME]).",
+  "Never commit secrets; SPDX header on every file; MPL-2.0 only.",
+  "State files live in .machine_readable/6a2/ ONLY (not repo root, not .machine_readable/ root).",
+  "Banned languages per estate policy (TypeScript, Python (non-Salt), Go, Node/npm/Bun).",
+]
+
+# ════════════════════════════════════════════════════════════════════════════
+# THE AGENT-FACING ROLE OF THIS REPO
+# ════════════════════════════════════════════════════════════════════════════
+# git-reticulator exists largely TO SERVE AI agents: it is a RAG context
+# provider. Agents are both maintainers of, and consumers of, this repo.
+
+[agent-as-consumer]
+primary-call = "zoom_to_node(node, level) -> token-bounded sub-lattice for the prompt"
+token-discipline = "request the SMALLEST level that answers the question; widen only on miss"
+trust-model = "when layers 3-4 are present, prefer context that carries FRESHNESS/PROVENANCE proofs; drop context that fails them rather than showing it"
+
+[maintenance-integrity]
+fail-closed = true
+require-evidence-per-step = true
+allow-silent-skip = false
+require-rerun-after-fix = true
+release-claim-requires-hard-pass = true
+
+[automation-hooks]
+on-enter = "Read 0-AI-MANIFEST.a2ml, then .machine_readable/6a2/STATE.a2ml, then PROOF-NEEDS.md"
+on-exit = "Update 6a2/STATE.a2ml [honest-status] + [critical-next-actions] with session outcomes"
+on-commit = "just must-check && just trust-verify"
