@@ -1,22 +1,51 @@
 # SPDX-License-Identifier: MPL-2.0
 # Intentfile (A2ML Canonical)
-# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath)
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 
 @abstract:
-Declared intent and purpose for Git Reticulator.
+Declared intent and scope for git-reticulator. Defines what this repo IS, what
+it is NOT, and which decisions are load-bearing. Prevents agents from drifting
+into scope creep or reversing key decisions.
 @end
 
 ## Purpose
 
-Git Reticulator — A hyperpolymath project.
+git-reticulator turns a git repository into a **typed, hierarchical, embeddable
+structure** — semantic keyword nodes at four levels of detail (Module > File >
+Definition > Block), connected by typed weighted relationships, each node
+optionally carrying an embedding. Its reason to exist is the **retrieval
+geometry**: `zoom_to_node` returns a token-bounded sub-structure so an LLM gets
+the *minimal relevant* context, not a whole-repo dump. It is layer 1 of a
+neuro-symbolic stack (reticulator → RAG → verisim octad → vcl-ut proofs).
 
-## Anti-Purpose
+## Anti-Purpose (prevents scope creep)
 
 This project is NOT:
-- A fork or wrapper around another tool
-- A monorepo (unless explicitly structured as one)
+- A general git statistics / blame / churn tool — it is a retrieval geometry,
+  not an analytics dashboard. Deepen the lattice; do not broaden into metrics.
+- A vector database — embeddings are *attached to* nodes; storage/search of
+  vectors at scale is verisim's job (Vector modality).
+- A proof system — formal guarantees are owed (PROOF-NEEDS.md) and, when they
+  land, are written in Idris2; do not invent a bespoke prover here.
+- A fork or wrapper around another tool; not a monorepo.
 
-## If In Doubt
+## Architectural Invariants (do not reverse without an ADR)
 
-If you are unsure whether a change is in scope, ask.
-Sensitive areas: ABI definitions, license headers, CI workflows.
+- LOD lattice over four SemanticLevels with `parent_id` (META ADR-002).
+- Per-node embedding — the neuro-symbolic fusion point (META ADR-003).
+- The word "lattice" is **earned, not asserted** (META ADR-005 / PROOF-NEEDS).
+- Honesty legend IMPLEMENTED|SKELETON|ASPIRATIONAL applies to all docs.
+
+## Sensitive Areas (if in doubt, ask)
+
+- `src/lattice/affine/` — the (aspirational) core model; changes ripple into
+  every downstream layer and into PROOF-NEEDS obligations.
+- `Cargo.toml` features — git-integration/db/embeddings gate real behaviour.
+- `.machine_readable/6a2/` — canonical state; format is specified.
+- CI workflows, license headers.
+
+## Ecosystem Position
+
+- belongs-to: standalone (part of the hyperpolymath neuro-symbolic stack)
+- depends-on: affinescript (core language, future), k9 (metadata)
+- depended-on-by: verisim (substrate), vcl-ut (proof layer), LLM/RAG consumers

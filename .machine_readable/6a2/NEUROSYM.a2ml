@@ -1,0 +1,111 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# NEUROSYM.a2ml — Neurosymbolic integration metadata for git-reticulator
+#
+# This file is NOT a generic template. It records the specific role
+# git-reticulator plays in a neurosymbolic (neuro-symbolic) system and the
+# invariants that make that role trustworthy. Status markers are honest:
+#   IMPLEMENTED | SKELETON | ASPIRATIONAL.
+
+[metadata]
+version = "0.2.0"
+last-updated = "2026-06-03"
+status-legend = "IMPLEMENTED = working in Rust on main; SKELETON = stub/println; ASPIRATIONAL = designed in .affine, not yet compilable"
+
+# ════════════════════════════════════════════════════════════════════════════
+# THESIS
+# ════════════════════════════════════════════════════════════════════════════
+# git-reticulator is the SYMBOLIC half of a neuro-symbolic retrieval system.
+# It turns an unstructured git repository into a typed, hierarchical, navigable
+# structure (the "lattice"): nodes are semantic keywords at four levels of
+# detail (Module > File > Definition > Block); edges are typed relationships
+# (calls/contains/inherits/depends_on) with weights. The NEURAL half is an
+# embedding attached to each node (models.affine: `Keyword.embedding`).
+#
+# The two halves are fused at the data-model level — every node is
+# simultaneously a lattice element (symbolic, ordered, provable) and a vector
+# (neural, similarity-searchable). That fusion is the whole point.
+
+[thesis]
+symbolic-substrate = "typed keyword lattice + weighted relationship graph (src/lattice/affine/models.affine)"
+neural-layer = "per-node embedding vector (Keyword.embedding: Option<Vec<f64>>)"
+fusion-point = "the Keyword node — one identity carries both an order position and an embedding"
+headline-capability = "proof-carrying retrieval: neural search PROPOSES context, the symbolic lattice + proofs DISPOSE"
+
+# ════════════════════════════════════════════════════════════════════════════
+# THE FOUR-LAYER NEURO-SYMBOLIC STACK
+# ════════════════════════════════════════════════════════════════════════════
+# git-reticulator is layer 1. It is designed to feed layers 2-4. Layers 2-4 are
+# OPTIONAL — git-reticulator + a plain vector store is already a useful
+# Graph-RAG. The verisim/vcl-ut layers are what make retrieval *provable*.
+
+[stack.layer-1-reticulator]
+role = "structure extractor + retrieval geometry"
+status = "SKELETON (Rust host 237 LOC of println stubs) + ASPIRATIONAL (.affine core)"
+produces = "lattice nodes (keywords w/ embeddings) + typed weighted edges"
+key-operation = "zoom_to_node(node, level) — level-of-detail subgraph for token-bounded LLM context"
+
+[stack.layer-2-rag]
+role = "neural retrieval over the lattice"
+status = "ASPIRATIONAL (embeddings feature-gated: Cargo.toml `embeddings`/tch off by default)"
+mechanism = "vector similarity finds candidate nodes; lattice edges expand/constrain/explain them (Graph-RAG)"
+token-discipline = "LOD zoom returns the minimal relevant sub-lattice, not the whole repo — bounds prompt size"
+
+[stack.layer-3-verisim]
+role = "the substrate at scale — the octad IS a superset of what reticulator needs"
+status = "EXTERNAL (hyperpolymath/verisimdb); integration ASPIRATIONAL"
+modality-mapping = [
+  "Graph modality      <- the reticulator lattice",
+  "Vector modality     <- the node embeddings",
+  "Document modality   <- source text of each unit",
+  "Temporal modality   <- commit history (when a concept entered the codebase)",
+  "Provenance modality <- authorship attribution at semantic-unit granularity",
+  "Semantic modality   <- type/category tags",
+]
+drift-payoff = "verisim drift detection becomes 'has the symbolic lattice drifted from the embedding space / from HEAD?' — i.e. stale-index detection for RAG, for free"
+
+[stack.layer-4-vcl-ut]
+role = "typed, proof-carrying query layer over verisim"
+status = "EXTERNAL (hyperpolymath/vcl-ut — REAL: machine-checked Idris2 corpus, %default total, zero proof-escape)"
+mechanism = "retrieval is a PROPOSITION to a consonance engine with up to 10 levels of type safety + optional PROOF clause"
+differentiator = "ordinary RAG retrieves text and hopes; here a retrieved context item can CARRY a machine-checked certificate"
+proofs-that-matter-for-rag = [
+  "PROVENANCE  -> 'this snippet was authored by X at commit Y' (auditable citation)",
+  "FRESHNESS   -> 'this line still exists at HEAD' (kills stale-context bugs)",
+  "EXISTENCE   -> 'this entity is real, not hallucinated' (kills fabricated citations)",
+  "INTEGRITY   -> 'the retrieved text matches the stored hash'",
+]
+
+# ════════════════════════════════════════════════════════════════════════════
+# CONSISTENCY INVARIANT (the neuro-symbolic seam — the genuinely novel proof target)
+# ════════════════════════════════════════════════════════════════════════════
+# When neural similarity and symbolic proximity disagree, ONE of them is stale.
+# We do not assume they agree; we make the disagreement observable and either
+# repair it (re-reticulate) or DISCLOSE it. See PROOF-NEEDS.md obligation P6.
+
+[consistency-invariant]
+statement = "for nodes a,b: high embedding-cosine(a,b) without a short lattice path is a DRIFT SIGNAL, not an error"
+action-on-drift = "re-extract (re-reticulate) the affected sub-lattice; or surface as verisim drift event"
+honest-position = "neural and symbolic layers are INDEPENDENT by default; any claimed correlation must be proven or disclosed, never assumed"
+
+# ════════════════════════════════════════════════════════════════════════════
+# HYPATIA SCANNER CONFIG (estate neurosym CI)
+# ════════════════════════════════════════════════════════════════════════════
+[hypatia-config]
+scan-enabled = true
+scan-depth = "standard"          # quick | standard | deep
+report-format = "logtalk"
+
+[symbolic-rules]
+# Project-specific symbolic rules Hypatia should enforce here.
+rules = [
+  { name = "no-lattice-claim-without-proof", pattern = "lattice", note = "if a module asserts lattice algebra (meet/join), PROOF-NEEDS.md P1 must cover it", severity = "info" },
+  { name = "no-stub-passed-as-done", pattern = "println!\\(\"", note = "build_lattice/query_lattice are SKELETON; do not document them as working", severity = "warning" },
+]
+
+[neural-config]
+# Embedding model selection is deferred until the `embeddings` feature is wired.
+# candidate-model = "code-embedding (local, deno/rust-hosted) — NOT a cloud call"
+# confidence-threshold = 0.85
+embedding-source = "ASPIRATIONAL (Cargo feature `embeddings` = tch/PyTorch, off by default)"
