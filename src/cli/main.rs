@@ -2,6 +2,7 @@
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 use clap::{Parser, Subcommand};
 use git_reticulator::lattice::affine;
+use git_reticulator::store::LatticeStore;
 
 #[derive(Parser)]
 #[command(name = "reticulate")]
@@ -39,6 +40,22 @@ enum Commands {
     },
 }
 
+/// Ingest a repository into a lattice. With `--features git-integration` this is
+/// git-aware (HEAD tree + commit-history coupling), falling back to a filesystem
+/// walk when `repo` is not a git repository; otherwise it is always a walk.
+#[cfg(feature = "git-integration")]
+fn reticulate_ingest(repo: &str) -> git_reticulator::lattice::Lattice {
+    match git_reticulator::ingest::from_git(repo) {
+        Ok(lattice) => lattice,
+        Err(_) => git_reticulator::ingest::from_path(repo),
+    }
+}
+
+#[cfg(not(feature = "git-integration"))]
+fn reticulate_ingest(repo: &str) -> git_reticulator::lattice::Lattice {
+    git_reticulator::ingest::from_path(repo)
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -46,9 +63,41 @@ async fn main() {
 
     match &cli.command {
         Commands::Build { repo, db } => {
-            println!("🚀 Starting reticulation process...");
-            affine::build_lattice(repo, db);
-            println!("✅ Semantic lattice built and stored.");
+            println!("🚀 Reticulating {repo} ...");
+            let lattice = reticulate_ingest(repo);
+            let cond = lattice.condense();
+            println!(
+                "   {} nodes · {} edges · {} components · acyclic={}",
+                lattice.len(),
+                lattice.edges().len(),
+                cond.num_components,
+                cond.is_acyclic()
+            );
+
+            #[cfg(feature = "verisim")]
+            let to_verisim = if db.starts_with("http://") || db.starts_with("https://") {
+                let store = git_reticulator::store::verisim::VerisimStore::new(db.clone());
+                match store.persist(&lattice).await {
+                    Ok(n) => println!("📦 persisted {n} octads to VeriSimDB ({db})"),
+                    Err(e) => eprintln!("⚠️  verisim persist failed: {e}"),
+                }
+                true
+            } else {
+                false
+            };
+            #[cfg(not(feature = "verisim"))]
+            let to_verisim = false;
+
+            if !to_verisim {
+                let mut store = git_reticulator::store::InMemoryStore::new();
+                let n = match store.persist(&lattice) {
+                    Ok(n) => n,
+                    // InMemoryStore is Infallible — this arm is unreachable.
+                    Err(never) => match never {},
+                };
+                println!("📦 persisted {n} nodes to the in-memory store (target: {db})");
+            }
+            println!("✅ done.");
         }
         Commands::Query { zoom, db } => {
             println!("🔍 Querying lattice for context: {}", zoom);

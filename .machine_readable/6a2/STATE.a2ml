@@ -1,44 +1,81 @@
-; SPDX-License-Identifier: MPL-2.0
-; Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
-;
-; .machine_readable/STATE.a2ml
-; Machine-readable project state for git-reticulator.
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# STATE.a2ml — Honest project state checkpoint for git-reticulator.
+# Canonical location is .machine_readable/6a2/ (supersedes the former
+# .machine_readable/STATE.a2ml S-expr file, removed 2026-06-03).
 
-(state
-  (metadata
-    (repo "git-reticulator")
-    (version "0.1.0")
-    (language "rust")
-    (last-updated "2026-04-04"))
+[metadata]
+project = "git-reticulator"
+version = "0.1.0"
+last-updated = "2026-06-04"
+status = "active"   # tidy-up merged (PR #23); migration direction decided 2026-06-04
 
-  (project-context
-    (description "Semantic lattice builder for git repositories using AffineScript")
-    (primary-language "rust")
-    (secondary-language "affinescript"))
+[migration-decision]
+date = "2026-06-04"
+decision = "AffineScript-first, build the Rust↔AffineScript bridge FIRST (ADR-006)"
+bridge-lives-in = "hyperpolymath/affinescript (runtime/) — NOT this repo"
+handoff-doc = "docs/MIGRATION-PLAN.adoc"
+db = "verisim standalone (HTTP client; octad store); no federation unless needed"
 
-  (crg
-    (grade "C")
-    (achieved-date "2026-04-04")
-    (test-categories
-      (unit        "yes" (location "src/lib.rs#unit_tests") (count 7))
-      (smoke       "yes" (location "src/lib.rs#unit_tests") (count 2))
-      (property    "yes" (location "tests/property_tests.rs") (count 5))
-      (e2e         "yes" (location "tests/integration_tests.rs") (count 2))
-      (reflexive   "yes" (location "tests/integration_tests.rs") (count 2))
-      (contract    "yes" (location "tests/integration_tests.rs") (count 3))
-      (aspect      "yes" (location "tests/integration_tests.rs") (count 6))
-      (benchmarks  "yes" (location "benches/git_reticulator_bench.rs") (count 6))))
+[project-context]
+name = "git-reticulator"
+purpose = "Semantic-lattice builder for git repositories: the symbolic half of a neuro-symbolic (Graph-RAG, proof-carrying retrieval) stack."
+primary-language = "rust"          # host: CLI + REST shell
+core-language = "affinescript"     # intended core (future, ADR-006); Rust reference core today
+completion-percentage = 35
 
-  (current-position
-    (milestone "CRG Grade C achieved")
-    (next-milestone "CRG Grade B (requires 6 quality targets)"))
+[position]
+phase = "implementation"   # design | skeleton | implementation | testing | maintenance
+maturity = "experimental"   # experimental | alpha | beta | production | lts
 
-  (blockers-and-issues
-    (blocker "affinescript-runtime path dep not resolvable without nextgen-languages present"
-             (severity "low")
-             (workaround "Feature gated; default features exclude it")))
+# ════════════════════════════════════════════════════════════════════════════
+# HONEST STATUS — what is real vs. what is claimed
+# ════════════════════════════════════════════════════════════════════════════
+[honest-status]
+lattice-engine = "REAL (src/lattice/mod.rs): Kosaraju SCC-condensation + partial order + LOD zoom (sound+complete) + meet (LCA). cargo green; 10 property/unit tests."
+ingest = "REAL but filesystem-only (src/ingest.rs, std-only, fail-soft). git2 HISTORY ingest NOT yet wired."
+store = "REAL: LatticeStore trait + InMemoryStore default; VeriSimDB octad backend over HTTP behind --features verisim (src/store.rs). Not yet wired into CLI/REST."
+host-reality = "CLI/REST still thin; the compat affine::{build_lattice,query_lattice} shim is now IO-free (no more println-only stubs)."
+embeddings = "NOT WIRED (tch/PyTorch feature off by default)"
+affine-core = "DEFERRED (ADR-006 bridge-first): the Rust engine is the reference core; the .affine core lands after the Rust↔AffineScript bridge."
+proofs = "ZERO mechanized (no .idr/.v/.ads). P2a/P4/P1b are TESTED not proved — see PROOF-NEEDS.md 'Proof status'. 'lattice' = meet-semilattice + digraph (full join not claimed)."
+rust-spark = "Stance documented (docs/decisions/rust-spark-stance.adoc) + spark-theatre-gate.yml added (lenient). Idris2/Zig ABI seam N/A until an FFI surface exists."
+tests = "30 pass (10 new lattice/ingest/store + 20 compat integration/property/api). cargo test exit 0."
 
-  (critical-next-actions
-    (action "Implement actual AffineScript engine integration behind feature flag")
-    (action "Add real git2-based lattice building")
-    (action "Upgrade to CRG Grade B: 6 quality targets")))
+[crg]
+grade = "C"
+achieved = "2026-04-04"
+caveat = "Superseded 2026-06-04: the lattice engine is real and its properties are tested (P2a/P4/P1b). Mechanized proofs still owed (PROOF-NEEDS.md). See READINESS.md + TEST-NEEDS.md."
+next = "Grade B requires 6 quality targets (lint/fmt/doc-coverage/etc.)"
+
+[blockers-and-issues]
+blockers = [
+  "RESOLVED 2026-06-04: removed the unresolvable affinescript-runtime path dep from Cargo.toml (cargo build now green); re-add as git/published dep when the bridge lands (ADR-006)",
+  "Deliverable 1 (Rust↔AffineScript bridge, in affinescript repo) blocks the .affine core migration (severity: high; docs/MIGRATION-PLAN.adoc)",
+  "'lattice' is a meet-semilattice + digraph; meet/zoom tested not proved (severity: medium; PROOF-NEEDS.md)",
+]
+template-debt = [
+  "RESOLVED 2026-06-03: 0-AI-MANIFEST.a2ml had [YOUR-REPO-NAME]/{{AUTHOR}} placeholders",
+  "RESOLVED 2026-06-03: 6a2 metadata set created (was missing entirely)",
+  "RESOLVED 2026-06-03: NEUROSYM.a2ml/PLAYBOOK.a2ml were empty commented stubs",
+  "RESOLVED 2026-06-03: methodology.a2ml had {{...}} placeholders (would reject itself)",
+  "RESOLVED 2026-06-03: TOPOLOGY.md described non-existent .as files",
+  "RESOLVED 2026-06-03: READINESS.md missing though Justfile reads CRG grade from it",
+  "OPEN: two parallel contractile systems (.machine_readable/*.contractile vs contractiles/) — consolidate to one canonical location as follow-up",
+  "OPEN (cosmetic): CHANGELOG line 'replace casket-pages with Jekyll' is a stale wart; the actual workflow casket-pages.yml is estate-correct",
+]
+
+[critical-next-actions]
+# Core-language question DECIDED 2026-06-04 (ADR-006): AffineScript-first, bridge-first.
+actions = [
+  "DELIVERABLE 1 (in affinescript repo, runtime/): build the Rust loader + marshalling for compiled AffineScript — the affine-js equivalent for Rust. Acceptance: a Rust test loads a compiled .affine fn, calls it, round-trips a string via a host extern fn. See docs/MIGRATION-PLAN.adoc.",
+  "LANDED 2026-06-04: Rust reference lattice core (SCC-condensation + partial order + LOD zoom + meet) + filesystem ingest + verisim store seam + 10 tests; cargo green; Rust/SPARK stance + spark-theatre-gate added. NEXT here: wire CLI/REST to ingest→lattice→store, add criterion benches, git2 history ingest.",
+  "Earn the 'lattice' word: SCC-condensation + partial order in the core, then discharge PROOF-NEEDS.md P1-P2 (Idris2).",
+  "Tests/benches: replace smoke-over-stubs with property tests (partial-order laws, zoom soundness/completeness) + criterion benches; strict-but-passable CI with an AffineScript compile gate.",
+]
+
+[ecosystem]
+part-of = ["RSR Framework", "hyperpolymath neuro-symbolic stack"]
+feeds = ["verisimdb (octad substrate)", "vcl-ut (proof-carrying queries)", "LLM/RAG consumers"]
+sibling-language = "affinescript"

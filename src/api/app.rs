@@ -24,12 +24,16 @@ pub struct ApiResponse {
 
 #[post("/build")]
 async fn build_lattice(req: web::Json<BuildRequest>) -> impl Responder {
-    println!("🚀 API: Reticulating repo: {}", req.repo);
-    affine::build_lattice(&req.repo, &req.db);
-    HttpResponse::Ok().json(ApiResponse {
-        status: "success".to_string(),
-        message: format!("Lattice built for {}", req.repo),
-    })
+    let lattice = crate::ingest::from_path(&req.repo);
+    let cond = lattice.condense();
+    HttpResponse::Ok().json(serde_json::json!({
+        "status": "success",
+        "repo": req.repo,
+        "nodes": lattice.len(),
+        "edges": lattice.edges().len(),
+        "components": cond.num_components,
+        "acyclic": cond.is_acyclic(),
+    }))
 }
 
 #[get("/zoom/{node_id}")]

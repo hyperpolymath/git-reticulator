@@ -1,128 +1,104 @@
-# ⚠️ STOP - CRITICAL READING REQUIRED
+# ⚠️ READ THIS FIRST (all AI agents)
 
-**THIS FILE MUST BE READ FIRST BY ALL AI AGENTS**
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 
 ## WHAT IS THIS?
 
-This is the AI manifest for **[YOUR-REPO-NAME]**. It declares:
-- Canonical file locations (where things MUST be, and nowhere else)
-- Critical invariants (rules that must NEVER be violated)
-- Repository structure and organization
+AI manifest for **git-reticulator** — a semantic-lattice + embedding builder
+for git repositories, and the symbolic (layer-1) half of a neuro-symbolic
+retrieval stack (see `.machine_readable/6a2/NEUROSYM.a2ml`).
 
-## CANONICAL LOCATIONS (UNIVERSAL RULE)
+It declares canonical file locations, critical invariants, and — importantly —
+the **honesty rule** for this repo: distinguish what is IMPLEMENTED from what is
+SKELETON (stub) from what is ASPIRATIONAL (designed, not buildable).
 
-### Machine-Readable Metadata: `.machine_readable/` ONLY
+## HONESTY RULE (specific to this repo)
 
-These 6 a2ml files MUST exist in `.machine_readable/` directory ONLY:
-1. **STATE.a2ml** - Project state, progress, blockers
-2. **META.a2ml** - Architecture decisions, governance
-3. **ECOSYSTEM.a2ml** - Position in ecosystem, relationships
-4. **AGENTIC.a2ml** - AI agent interaction patterns
-5. **NEUROSYM.a2ml** - Neurosymbolic integration config
-6. **PLAYBOOK.a2ml** - Operational runbook
+git-reticulator is early. Much of the "core" lives in `.affine` files that
+**cannot compile** (AffineScript has no working compiler yet) and that, as
+written, call Rust crates AffineScript cannot bind. The Rust host is ~237 LOC
+of `println!` stubs. Therefore:
 
-**CRITICAL:** If ANY of these files exist in the root directory, this is an ERROR.
+- Never document a stub as a working feature.
+- Never assert "lattice" algebra (meet/join) — the structure is a typed DAG
+  until `PROOF-NEEDS.md` P1/P2 are discharged. Say "typed graph" / "DAG".
+- Status legend everywhere: **IMPLEMENTED | SKELETON | ASPIRATIONAL**.
 
-### Anchor File: `.machine_readable/anchors/ANCHOR.a2ml` ONLY
+## CANONICAL LOCATIONS
 
-Canonical authority and semantic-boundary declaration MUST exist at:
+### Machine-readable metadata: `.machine_readable/6a2/` ONLY
+The six a2ml files live here (NOT repo root, NOT `.machine_readable/` root):
+1. `STATE.a2ml` — honest project state, blockers, next actions
+2. `META.a2ml` — architecture decisions (ADRs), rationale
+3. `ECOSYSTEM.a2ml` — relationships (affinescript, verisim, vcl-ut, k9, Hypatia)
+4. `AGENTIC.a2ml` — AI agent permissions/constraints + RAG-provider role
+5. `NEUROSYM.a2ml` — the neuro-symbolic architecture (the thesis of this repo)
+6. `PLAYBOOK.a2ml` — neuro-symbolic playbooks + ops runbook
 
-` .machine_readable/anchors/ANCHOR.a2ml `
+### Proof obligations: `PROOF-NEEDS.md` (repo root)
+What must be proved to earn the word "lattice" and to make retrieval provable.
 
-Do not place `ANCHOR.a2ml` at repository root.
+### Agent instructions: `.machine_readable/agent_instructions/`
+`methodology.a2ml`, `coverage.a2ml`, `debt.a2ml` (ADR-002 methodology layer).
 
-### Maintenance Policies: `.machine_readable/policies/` ONLY
+### Contractiles: `contractiles/` (load-bearing) — see note below
+The root `contractiles/{intend,must,trust}/*.a2ml` are the canonical, generating
+source: `contractile.just` is generated from them and imported by the Justfile.
+A second, NON-load-bearing set exists at `.machine_readable/*.contractile`
+(documentation-style); consolidating the two is tracked in STATE.a2ml.
 
-Canonical maintenance/governance files MUST exist under:
-
-` .machine_readable/policies/ `
-
-Minimum required files:
-- `MAINTENANCE-AXES.a2ml`
-- `MAINTENANCE-CHECKLIST.a2ml`
-- `SOFTWARE-DEVELOPMENT-APPROACH.a2ml`
-
-Do not place maintenance policy files in repository root.
-
-### Bot Directives: `.machine_readable/bot_directives/` ONLY
-
-Bot-specific instructions for your automated agents.
-
-### Contractiles: `.machine_readable/contractiles/` ONLY
-
-Policy enforcement contracts (k9, dust, lust, must, trust).
-
-### AI Configuration & Guides: `.machine_readable/ai/` ONLY
-
-- `AI.a2ml` - Language-specific or LLM-specific patterns
-- `PLACEHOLDERS.md` - Bootstrap guide
-
-### Community & Forge Metadata: `.github/` ONLY
-
-- `CODEOWNERS` - Review assignments
-- `MAINTAINERS` - Machine-readable contact list
-- `SUPPORT` - Support channels
-- `SECURITY.md` - Technical security policy
-- `CONTRIBUTING.md` - Technical contribution manual
-- `CODE_OF_CONDUCT.md` - Conduct rules
-
-### Agent Instructions: `.machine_readable/bot_directives/` ONLY
-
-Methodology-aware AI agent configuration (ADR-002):
-- `methodology.a2ml` - Mode, invariants, ring ceiling, priority weights
-- `coverage.a2ml` - Session coverage tracking (visited, skipped, MUSTs)
-- `debt.a2ml` - Meander debt carried between sessions
-
-Entry points:
-- `0-AI-MANIFEST.a2ml` - THIS FILE (universal entry point, read FIRST)
+### Community/forge metadata: `.github/`, plus root `SECURITY.md`, `CONTRIBUTING.md`.
 
 ## CORE INVARIANTS
 
-1. **No state file duplication** - Root must NOT contain STATE.a2ml, META.a2ml, etc.
-2. **Single source of truth** - `.machine_readable/` is authoritative
-3. **No stale metadata** - If root state files exist, they are OUT OF DATE
-4. **License consistency** - All code MPL-2.0 unless platform requires MPL-2.0
-5. **Author attribution** - Always "{{AUTHOR}} <{{AUTHOR_EMAIL}}>"
-6. **Container images** - MUST use Chainguard base (`cgr.dev/chainguard/wolfi-base:latest` or `cgr.dev/chainguard/static:latest`)
-7. **Container runtime** - Podman, never Docker. Files are `Containerfile`, never `Dockerfile`
-8. **Container orchestration** - `selur-compose`, never `docker-compose`
+1. State files in `.machine_readable/6a2/` only — no duplication in root.
+2. `.machine_readable/6a2/` is the single source of truth for project state.
+3. All code MPL-2.0; SPDX header on every file.
+4. Author attribution: "Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>".
+5. Container images use Chainguard base; runtime Podman (Containerfile, not Dockerfile);
+   orchestration selur-compose (not docker-compose).
+6. No template placeholders ever committed (`{{...}}`, `[YOUR-REPO-NAME]`).
 
-## REPOSITORY STRUCTURE
-
-This repo follows the **Dual-Track** architecture:
+## ACTUAL REPOSITORY STRUCTURE (as built, 2026-06-03)
 
 ```
-[YOUR-REPO-NAME]/
-├── 0-AI-MANIFEST.a2ml         # THIS FILE (start here)
-├── README.adoc                 # High-level pitch — excitement and awe (Rich Human)
-├── EXPLAINME.adoc              # Developer deep-dive — how it works (Rich Nerd)
-├── ROADMAP.adoc                # Future direction
-├── CONTRIBUTING.adoc           # Human contribution guide
-├── GOVERNANCE.adoc             # Decision-making model
-├── Justfile                    # Task runner
-├── Containerfile               # OCI build
-├── LICENSE                     # Primary license
-├── src/                        # Source code
-│   └── interface/              # Verified Interface Seams
-│       ├── abi/                # Idris2 ABI (The Spec)
-│       ├── ffi/                # Zig FFI (The Bridge)
-│       └── generated/          # C Headers (The Result)
-├── container/                  # Stapeln container ecosystem
-├── docs/                       # Technical depths
-│   ├── attribution/            # Citations, owners, maintainers (adoc)
-│   ├── architecture/           # Topology, diagrams
-│   ├── theory/                 # Domain theory
-│   └── practice/               # Manuals
-├── docs/legal/                  # Legal exhibits and full texts
-└── .machine_readable/          # ALL machine-readable metadata
+git-reticulator/
+├── 0-AI-MANIFEST.a2ml          # THIS FILE
+├── README.adoc                 # pitch + honest status
+├── EXPLAINME.adoc              # developer deep-dive
+├── PROOF-NEEDS.md              # formal obligations (the 'lattice' debt)
+├── TEST-NEEDS.md               # test inventory (smoke-level today)
+├── READINESS.md                # CRG grade source (read by `just crg-grade`)
+├── TOPOLOGY.md                 # accurate module map + data flow
+├── Cargo.toml / Justfile       # Rust build + task runner
+├── src/
+│   ├── lib.rs                  # host library (SKELETON: println stubs)
+│   ├── cli/main.rs             # `reticulate` CLI (clap)
+│   ├── api/app.rs              # actix-web REST shell (stub responses)
+│   └── lattice/affine/         # ASPIRATIONAL core (cannot compile yet)
+│       ├── models.affine       # data model (Keyword/Relationship/Lattice)
+│       ├── storage.affine      # Postgres + pgRouting persistence
+│       └── lattice.affine      # build_lattice / zoom_to_node (LOD)
+├── tests/                      # *.rs smoke/contract + lattice_tests.affine
+├── benches/                    # criterion harness
+├── contractiles/               # load-bearing contractile sources
+├── docs/                       # setup + tech-debt audit
+└── .machine_readable/
+    ├── 6a2/                    # the six a2ml files (canonical state)
+    ├── agent_instructions/     # methodology/coverage/debt
+    └── *.contractile           # secondary (non-load-bearing) contractile docs
 ```
 
 ## SESSION STARTUP CHECKLIST
 
-✅ Read THIS file (0-AI-MANIFEST.a2ml) first
-✅ Understand canonical location: `.machine_readable/`
-✅ State understanding of canonical locations
+1. Read THIS file.
+2. Read `.machine_readable/6a2/STATE.a2ml` (honest status).
+3. Read `PROOF-NEEDS.md` before touching anything that claims "lattice".
+4. Respect the IMPLEMENTED/SKELETON/ASPIRATIONAL legend in all edits.
 
-## ATTESTATION PROOF
+## ATTESTATION
 
-**"I have read the AI manifest. All machine-readable content (state files, anchors, policies, bot directives, contractiles, AI guides) is located in `.machine_readable/` ONLY, and community metadata is in `.github/`. I will not create duplicate files in the root directory."**
+"I have read the manifest. State lives in `.machine_readable/6a2/` only. I will
+mark SKELETON/ASPIRATIONAL honestly, will not claim 'lattice' algebra without
+discharging PROOF-NEEDS.md P1/P2, and will not commit template placeholders."

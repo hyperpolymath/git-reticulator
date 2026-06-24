@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # methodology.a2ml — AI agent methodology configuration
 # Declares how agents should approach work in this repository.
@@ -9,7 +9,7 @@
 
 [metadata]
 version = "1.0.0"
-last-updated = "{{CURRENT_DATE}}"
+last-updated = "2026-06-03"
 spec = "https://github.com/hyperpolymath/standards/blob/main/agentic-a2ml/docs/ADR-002-methodology-layer.adoc"
 
 # ============================================================================
@@ -55,7 +55,7 @@ perfective = 10   # % for SPDX headers, doc updates, formatting, style
 # Customise this per project — the template default is generic.
 
 [methodology.unique-strength]
-description = "{{PROJECT_UNIQUE_STRENGTH}}"
+description = "The neuro-symbolic seam: one node = one lattice element + one embedding. Deepen the symbolic retrieval geometry (LOD lattice, provable zoom), not breadth of git statistics."
 deepen-not-broaden = true
 
 # ============================================================================
@@ -71,10 +71,10 @@ deepen-not-broaden = true
 
 [methodology.divergent-invariants]
 rules = [
-  # Customise per project. Examples:
-  # "Idris2 only for formal verification — no Lean4, Coq, Agda",
-  # "believe_me count must remain zero",
-  # "FFI architecture: Idris2 → RefC → Zig → C ABI (no shortcuts)",
+  "Never claim 'lattice' algebra (meet/join) without discharging PROOF-NEEDS.md P1/P2 — otherwise say 'typed graph/DAG'",
+  "Never document a println/SKELETON stub as a working feature",
+  "Idris2 is the proof language if/when proofs land (estate spine; matches vcl-ut)",
+  "Retrieval geometry (LOD zoom) is the core strength — deepen it, do not add unrelated git analytics",
 ]
 
 # Optional: language invariant for the core strength
@@ -89,9 +89,10 @@ rules = [
 
 [methodology.known-constraints]
 constraints = [
-  # Customise per project. Examples:
-  # "End-to-end build has never been verified",
-  # "libproject.so does not exist yet — all bindings call stubs",
+  "The .affine lattice core cannot compile (no AffineScript compiler) AND calls Rust crates it cannot bind — design rethink owed (STATE.a2ml ADR-001)",
+  "git2/postgres/tch are all feature-gated OFF — reticulate reads nothing real yet",
+  "build_lattice/query_lattice are println! stubs; the 27 tests assert no-panic, not behaviour",
+  "'lattice' is currently a typed digraph with cycles — not yet a partial order",
 ]
 
 # ============================================================================

@@ -1,0 +1,112 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= git-reticulator — AffineScript Migration Plan & Session Handoff
+:revdate: 2026-06-04
+:status: planning
+
+== TL;DR (RESUME HERE)
+
+Decision (2026-06-04): **AffineScript-first, but build the Rust↔AffineScript
+bridge FIRST** (resolves META `ADR-001`; chosen over an immediate full migrate
+and over a Rust-native core). No migration code has been written yet — this
+document is the handoff so the work can be picked up locally.
+
+The bridge is **not** a git-reticulator deliverable — it lives in the
+**`hyperpolymath/affinescript`** repo (`runtime/`). git-reticulator is its
+*first consumer*, not its home.
+
+== Why "bridge first" (AffineScript readiness findings)
+
+Assessed 2026-06-04 against `/affinescript` (authoritative:
+`affinescript/docs/CAPABILITY-MATRIX.adoc`). Honest state:
+
+* The compiler **works**: `.affine` → Wasm / Deno-ESM / Node-CJS, ~278 tests green.
+* AffineScript is **alpha (0.1.1)** with a known base-language soundness gap
+  (CORE-01 / affinescript#177). The repo runs a CI ratchet that *fails* any
+  "production-ready" claim — so do not write one.
+* It is **Wasm-sandboxed**: a `.affine` core **cannot** call `git2`/`postgres`
+  crates directly (the old `src/lattice/affine/*.affine` is invalid on this
+  count). All IO is host-side, declared as `extern fn` host imports.
+* The Rust integration story is **the blocker**: `affinescript/runtime` (crate
+  `affinescript-runtime`) is ~80% "TODO Phase 6" stubs (`ffi.rs` marshalling
+  returns 0/null), and there is **no Rust loader/marshalling library** — JS has
+  `packages/affine-js`; Rust has nothing equivalent. The only proven host+core
+  pattern (the VS Code extension) is JS-side only.
+
+Conclusion: a pure AffineScript lattice core is the right *target*, but it
+cannot load into a Rust host until the bridge exists.
+
+== Deliverable 1 — the bridge (in `hyperpolymath/affinescript`)
+
+A Rust loader + marshalling layer: the `affine-js` equivalent for Rust.
+
+* Location: `affinescript/runtime/` (extend the crate) or a new
+  `affinescript/packages/affine-rs/`.
+* Scope:
+** A `wasmtime`- (or `wasmi`-) based loader: `AffineModule::from_bytes(&[u8])`,
+   instantiate, call exports (`main`, named `pub fn`s).
+** Memory marshalling: read/write AffineScript strings (`[u32 len][utf-8]`),
+   ints, records, `Vec`, across the Wasm linear-memory boundary (the part
+   `affine-js/mod.js` does in JS; `runtime/src/ffi.rs` Phase-6 stubs need
+   completing).
+** An `extern fn` host-import registry so the host supplies implementations
+   (mirror the `Vscode` import object in `affine-vscode/mod.js`).
+* Acceptance: a Rust test loads a trivial compiled `.affine` (`fn add(a,b)`),
+  calls it, and round-trips a string through a host `extern fn`.
+
+== Deliverable 2 — git-reticulator migration (once the bridge exists)
+
+Architecture: **thin Rust host + pure AffineScript lattice core over Wasm.**
+
+* Rust host (IO, provided to the core as `extern fn`s):
+** `git2` ingestion (real repo parsing — currently not wired).
+** verisim as the database (see below).
+** embeddings (feature-gated), actix REST surface.
+** loads + drives the AffineScript-Wasm core via Deliverable 1.
+* AffineScript core (pure, `.affine` → Wasm): the lattice algorithm only —
+  SCC-condensation, partial order, meet/join, LOD `zoom_to_node` selection.
+  This is the slice that earns the "lattice" word (see `PROOF-NEEDS.md` P1–P4).
+* Seam: define a Rust `trait LatticeCore` so the host runs against a Rust impl
+  today and swaps to the Wasm-backed impl with no host rewrite.
+
+=== Database: verisim (standalone; federate only if needed)
+
+git-reticulator is an HTTP client of `verisim-api` (default `:8080`). No
+federation — a single octad store suffices. A thin `reqwest` client (own module,
+no cross-repo path-dep that would break CI):
+
+[cols="1,2"]
+|===
+| Lattice concept | verisim mapping
+
+| node (Keyword) | one octad — `POST /api/v1/octads`
+| edges | Graph modality
+| embedding | Vector modality
+| source text | Document modality
+| authorship | Provenance modality
+| commit history | Temporal modality
+| retrieval | VQL via `/queries`
+| staleness sentinel | `/drift`
+|===
+
+(A Rust client SDK exists at `verisimdb/connectors/clients/rust` for reference,
+but copying its shapes into a local `reqwest` module keeps CI self-contained.)
+
+=== Tests, benches, CI (per the CRG taxonomy already in `TEST-NEEDS.md`)
+
+* Replace the smoke-over-`println` tests with behavioural tests that assert
+  lattice **properties** (proptest): partial-order laws, `zoom` soundness +
+  completeness, SCC-condensation acyclicity.
+* Benches: criterion over ingest / build / zoom on fixture repos (baseline).
+* Strict-but-passable CI: keep the `standards` reusable wrappers; add an
+  AffineScript compile gate for the `.affine` core (CI is the verification
+  surface — there is no AffineScript toolchain in the web sandbox); keep
+  governance/scorecard/secret-scanner green. Gate on real failures only.
+
+== Status ledger
+
+* PR #23 (docs/metadata de-template + 6a2 + PROOF-NEEDS + CI hardening): **merged**.
+* This plan: the agreed next-steps record. Migration code: **not started**
+  (blocked on Deliverable 1).
+* Cross-refs: `META.a2ml` ADR-001/ADR-006; `STATE.a2ml` critical-next-actions;
+  `PROOF-NEEDS.md`; `NEUROSYM.a2ml` (the four-layer stack this realises).

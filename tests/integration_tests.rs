@@ -78,15 +78,15 @@ fn reflexive_query_lattice_idempotent_on_same_args() {
 /// assign a meaningful value from a void operation.
 #[test]
 fn contract_build_lattice_returns_unit() {
-    let result: () = affine::build_lattice("contract-repo", "contract://db");
-    let _ = result; // type annotation above is the real assertion
+    // the unit pattern asserts build_lattice returns ()
+    let () = affine::build_lattice("contract-repo", "contract://db");
 }
 
 /// Contract: query_lattice must always return () for the same reason.
 #[test]
 fn contract_query_lattice_returns_unit() {
-    let result: () = affine::query_lattice("contract-node", "contract://db");
-    let _ = result;
+    // the unit pattern asserts query_lattice returns ()
+    let () = affine::query_lattice("contract-node", "contract://db");
 }
 
 /// Contract: neither function panics when given the same db URI but different
