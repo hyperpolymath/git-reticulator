@@ -48,6 +48,105 @@ impl LatticeStore for InMemoryStore {
     }
 }
 
+/// File-backed store: a versioned JSON envelope on local disk. This is the
+/// default persistence for the dogfood loop (`reticulate build` → file →
+/// `reticulate query`) — no database required. VeriSimDB remains the intended
+/// database of record for the full neuro-symbolic stack; this store exists so
+/// the build→query loop works standalone today.
+pub mod file {
+    use crate::lattice::Lattice;
+    use serde::{Deserialize, Serialize};
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    /// Bumped whenever the on-disk shape changes incompatibly.
+    pub const FORMAT_VERSION: u32 = 1;
+    const FORMAT_NAME: &str = "git-reticulator/lattice";
+
+    #[derive(Serialize, Deserialize)]
+    struct Envelope {
+        format: String,
+        version: u32,
+        lattice: Lattice,
+    }
+
+    /// Errors from loading a lattice file.
+    #[derive(Debug)]
+    pub enum LoadError {
+        Io(std::io::Error),
+        Parse(serde_json::Error),
+        /// The file parsed but is not a lattice file, or its version is unsupported.
+        Format(String),
+    }
+
+    impl std::fmt::Display for LoadError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                LoadError::Io(e) => write!(f, "cannot read lattice file: {e}"),
+                LoadError::Parse(e) => write!(f, "cannot parse lattice file: {e}"),
+                LoadError::Format(msg) => write!(f, "unsupported lattice file: {msg}"),
+            }
+        }
+    }
+
+    /// Persist a lattice as JSON at `path`; `LatticeStore::persist` creates
+    /// parent directories as needed and overwrites any existing file.
+    #[derive(Debug)]
+    pub struct FileStore {
+        path: PathBuf,
+    }
+
+    impl FileStore {
+        pub fn new(path: impl Into<PathBuf>) -> Self {
+            Self { path: path.into() }
+        }
+
+        pub fn path(&self) -> &Path {
+            &self.path
+        }
+
+        /// Load a lattice previously written by [`FileStore`].
+        pub fn load(path: &Path) -> Result<Lattice, LoadError> {
+            let text = fs::read_to_string(path).map_err(LoadError::Io)?;
+            let envelope: Envelope = serde_json::from_str(&text).map_err(LoadError::Parse)?;
+            if envelope.format != FORMAT_NAME {
+                return Err(LoadError::Format(format!(
+                    "format is '{}', expected '{FORMAT_NAME}'",
+                    envelope.format
+                )));
+            }
+            if envelope.version != FORMAT_VERSION {
+                return Err(LoadError::Format(format!(
+                    "version {} not supported (this build reads version {FORMAT_VERSION})",
+                    envelope.version
+                )));
+            }
+            Ok(envelope.lattice)
+        }
+    }
+
+    impl super::LatticeStore for FileStore {
+        type Error = std::io::Error;
+
+        fn persist(&mut self, lattice: &Lattice) -> Result<usize, Self::Error> {
+            if let Some(parent) = self.path.parent() {
+                if !parent.as_os_str().is_empty() {
+                    fs::create_dir_all(parent)?;
+                }
+            }
+            let envelope = Envelope {
+                format: FORMAT_NAME.to_string(),
+                version: FORMAT_VERSION,
+                lattice: lattice.clone(),
+            };
+            let json = serde_json::to_string(&envelope)
+                .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
+            fs::write(&self.path, json)?;
+            Ok(lattice.len())
+        }
+    }
+}
+
 /// VeriSimDB octad-store backend (feature `verisim`). Talks to `verisim-api`
 /// over HTTP; see the module docs for the modality mapping.
 #[cfg(feature = "verisim")]
@@ -135,5 +234,57 @@ mod tests {
         let n = store.persist(&lattice).unwrap();
         assert_eq!(n, 2);
         assert_eq!(store.stored(), 2);
+    }
+
+    #[test]
+    fn file_store_round_trips_a_lattice() {
+        let mut b = LatticeBuilder::new();
+        let m = b.add_keyword("root".into(), "/".into(), SemanticLevel::Module, None);
+        let f = b.add_keyword("a.rs".into(), "/a.rs".into(), SemanticLevel::File, Some(m));
+        b.add_keyword(
+            "login".into(),
+            "/a.rs".into(),
+            SemanticLevel::Definition,
+            Some(f),
+        );
+        b.add_relationship(f, m, 1.0, "contains".into());
+        let lattice = b.build();
+
+        let path = std::env::temp_dir().join(format!(
+            "git-reticulator-roundtrip-{}.json",
+            std::process::id()
+        ));
+        let mut store = file::FileStore::new(&path);
+        let n = store.persist(&lattice).unwrap();
+        assert_eq!(n, 3);
+
+        let loaded = file::FileStore::load(&path).unwrap();
+        assert_eq!(loaded.len(), lattice.len());
+        assert_eq!(loaded.edges().len(), lattice.edges().len());
+        assert_eq!(loaded.node(2).unwrap().name, "login");
+        assert_eq!(loaded.node(2).unwrap().parent, Some(1));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn file_store_load_rejects_garbage_and_missing() {
+        assert!(matches!(
+            file::FileStore::load(std::path::Path::new("/no/such/lattice.json")),
+            Err(file::LoadError::Io(_))
+        ));
+        let path = std::env::temp_dir().join(format!(
+            "git-reticulator-garbage-{}.json",
+            std::process::id()
+        ));
+        std::fs::write(
+            &path,
+            "{\"format\":\"something-else\",\"version\":1,\"lattice\":{\"nodes\":[],\"edges\":[]}}",
+        )
+        .unwrap();
+        assert!(matches!(
+            file::FileStore::load(&path),
+            Err(file::LoadError::Format(_))
+        ));
+        let _ = std::fs::remove_file(&path);
     }
 }

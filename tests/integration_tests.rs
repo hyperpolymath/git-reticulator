@@ -34,7 +34,7 @@ fn e2e_build_then_query_pipeline() {
 fn e2e_batch_build_and_query() {
     let repos = [
         ("repo-alpha", "db://alpha", "node::alpha"),
-        ("repo-beta",  "db://beta",  "node::beta"),
+        ("repo-beta", "db://beta", "node::beta"),
         ("repo-gamma", "db://gamma", "node::gamma"),
     ];
 

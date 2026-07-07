@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+
+= Dogfooding git-reticulator: token-bounded repo context
+:toc:
+:revdate: 2026-07-07
+
+== The point
+
+The owner's primary near-term use case is *reducing LLM token spend* during
+agentic coding sessions: when an agent (Claude Code or similar) starts work on
+a repo, it typically burns thousands of tokens on exploratory `ls`/`grep`/file
+reads just to build a mental map. git-reticulator replaces that exploration
+with one pre-built, queryable structure:
+
+[source,bash]
+----
+# Once per repo (rebuild after large changes; cheap enough to re-run freely):
+reticulate build --repo ~/dev/some-repo
+
+# In-session, instead of grep sweeps:
+reticulate query --repo ~/dev/some-repo --zoom auth --level definition --budget-tokens 800
+reticulate query --repo ~/dev/some-repo --zoom store --level file --format json
+----
+
+`build` ingests the repo (git-aware with `--features git-integration`: HEAD
+tree + commit co-change coupling; plain filesystem walk otherwise) and writes
+`<repo>/.git-reticulator/lattice.json`. `query` resolves a keyword against the
+lattice, zooms each match to the requested level-of-detail, and renders a
+context pack that *fits the stated token budget* — anything dropped is counted
+and reported, never silently omitted.
+
+== How this reduces token count, concretely
+
+1. *Map once, query many.* The lattice is built offline (zero LLM tokens).
+   Each query returns only the relevant subtree at the requested granularity.
+2. *Explicit budget.* `--budget-tokens N` caps the pack (chars/4 estimate), so
+   a context injection can never blow out a prompt.
+3. *Agent integration.* The intended consumption path is a Claude Code skill /
+   `CLAUDE.md` instruction of the form: "before grep-exploring, run
+   `reticulate query --zoom <topic>` and only read the files it names."
+   That converts N speculative file reads into one bounded text block.
+
+== Honest status of the claim
+
+The *mechanism* works end-to-end as of this document's date (build → file →
+query, tested). The *savings* are not yet measured. Before wiring this into
+every session, run the experiment:
+
+* Pick 3 real tasks on a mid-size repo.
+* Run each twice: once with normal agent exploration, once with a
+  "query-the-lattice-first" instruction.
+* Compare input-token counts and whether the agent found the right files.
+
+If the packs lose to plain exploration, the fix is better ingestion (real
+symbol extraction via tree-sitter rather than the current line-prefix
+heuristic), not more infrastructure.
+
+== What is deliberately NOT needed for this loop
+
+* *VeriSimDB / postgres* — the JSON file store is enough for one repo.
+* *Embeddings* — symbolic keyword resolution first; neural similarity later.
+* *AffineScript core* — the Rust reference engine is the core until the
+  bridge lands (ADR-006, tracked in the `affinescript` repo).
+* *Proofs* — PROOF-NEEDS.md governs the "lattice" claim, not the dogfood loop.
+
+== Path to production-ready (proposed order)
+
+1. *Dogfood loop* (this document) — DONE: persistence + budgeted query.
+2. *Measurement* — the experiment above; publish numbers in this file.
+3. *Ingestion quality* — tree-sitter (or per-language) definition extraction;
+   `calls`/`imports` edges, not just containment + co-change.
+4. *Freshness* — record the HEAD commit in the lattice file; `query` warns
+   when the lattice is stale relative to the repo.
+5. *Agent surface* — a Claude Code skill (estate-wide) that fronts `reticulate
+   query`; optionally the REST API for non-CLI consumers.
+6. *CRG B* — lint/fmt/doc-coverage targets per READINESS.md.
+7. *The neuro-symbolic stack* — embeddings, VeriSimDB, proof-carrying
+   retrieval — only after steps 1–5 prove the symbolic half pays for itself.

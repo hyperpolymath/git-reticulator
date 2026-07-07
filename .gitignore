@@ -1,3 +1,6 @@
 # Rust build artifacts
 /target/
 Cargo.lock
+
+# Local lattice cache written by `reticulate build`
+.git-reticulator/

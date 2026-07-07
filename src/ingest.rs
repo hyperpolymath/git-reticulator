@@ -70,7 +70,12 @@ fn walk(builder: &mut LatticeBuilder, dir: &Path, parent: NodeId, depth: usize) 
             if let Ok(content) = fs::read_to_string(&path) {
                 let file_disp = path.to_string_lossy().to_string();
                 for def in extract_definitions(&content) {
-                    builder.add_keyword(def, file_disp.clone(), SemanticLevel::Definition, Some(file_id));
+                    builder.add_keyword(
+                        def,
+                        file_disp.clone(),
+                        SemanticLevel::Definition,
+                        Some(file_id),
+                    );
                 }
             }
         }
@@ -81,8 +86,17 @@ fn walk(builder: &mut LatticeBuilder, dir: &Path, parent: NodeId, depth: usize) 
 /// identifier following a common definition keyword at the start of a line.
 fn extract_definitions(content: &str) -> Vec<String> {
     const KEYWORDS: [&str; 11] = [
-        "pub fn ", "fn ", "def ", "class ", "struct ", "enum ", "trait ", "type ", "module ",
-        "interface ", "func ",
+        "pub fn ",
+        "fn ",
+        "def ",
+        "class ",
+        "struct ",
+        "enum ",
+        "trait ",
+        "type ",
+        "module ",
+        "interface ",
+        "func ",
     ];
     let mut defs = Vec::new();
     for line in content.lines() {
@@ -125,7 +139,8 @@ mod tests {
 
     #[test]
     fn extracts_definitions_from_source_text() {
-        let defs = extract_definitions("pub fn login() {}\nstruct Session;\n// comment\nfn helper() {}");
+        let defs =
+            extract_definitions("pub fn login() {}\nstruct Session;\n// comment\nfn helper() {}");
         assert!(defs.contains(&"login".to_string()));
         assert!(defs.contains(&"Session".to_string()));
         assert!(defs.contains(&"helper".to_string()));
@@ -173,8 +188,12 @@ mod git_history {
             .and_then(|s| s.to_str())
             .map(String::from)
             .unwrap_or_else(|| repo_path.to_string());
-        let root_id =
-            builder.add_keyword(root_name, repo_path.to_string(), SemanticLevel::Module, None);
+        let root_id = builder.add_keyword(
+            root_name,
+            repo_path.to_string(),
+            SemanticLevel::Module,
+            None,
+        );
 
         // 1. Structure from the HEAD tree. `dir_ids` is keyed by the
         //    trailing-slash directory path git2 hands the walk callback ("" is
@@ -188,8 +207,8 @@ mod git_history {
         let head = repo.head()?.peel_to_tree()?;
         head.walk(git2::TreeWalkMode::PreOrder, |dir, entry| {
             let name = match entry.name() {
-                Some(n) => n.to_string(),
-                None => return git2::TreeWalkResult::Ok, // non-UTF-8 path: skip
+                Ok(n) => n.to_string(),
+                Err(_) => return git2::TreeWalkResult::Ok, // non-UTF-8 path: skip
             };
             let parent = dir_ids.get(dir).copied().unwrap_or(root_id);
             match entry.kind() {
@@ -220,8 +239,16 @@ mod git_history {
         for (fid, oid, path) in &blobs {
             if let Ok(blob) = repo.find_blob(*oid) {
                 if let Ok(text) = std::str::from_utf8(blob.content()) {
-                    for def in extract_definitions(text).into_iter().take(MAX_DEFS_PER_FILE) {
-                        builder.add_keyword(def, path.clone(), SemanticLevel::Definition, Some(*fid));
+                    for def in extract_definitions(text)
+                        .into_iter()
+                        .take(MAX_DEFS_PER_FILE)
+                    {
+                        builder.add_keyword(
+                            def,
+                            path.clone(),
+                            SemanticLevel::Definition,
+                            Some(*fid),
+                        );
                     }
                 }
             }
@@ -244,11 +271,11 @@ mod git_history {
                         Err(_) => continue,
                     };
                     let parent_tree = commit.parent(0).ok().and_then(|p| p.tree().ok());
-                    let diff =
-                        match repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&tree), None) {
-                            Ok(d) => d,
-                            Err(_) => continue,
-                        };
+                    let diff = match repo.diff_tree_to_tree(parent_tree.as_ref(), Some(&tree), None)
+                    {
+                        Ok(d) => d,
+                        Err(_) => continue,
+                    };
                     let mut changed: Vec<NodeId> = Vec::new();
                     for delta in diff.deltas() {
                         let path = delta.new_file().path().or_else(|| delta.old_file().path());
@@ -291,7 +318,10 @@ mod git_history_tests {
         let Ok(lat) = from_git(".") else {
             panic!("the package working directory should be a git repository");
         };
-        assert!(lat.len() > 1, "the HEAD tree should yield more than the root module");
+        assert!(
+            lat.len() > 1,
+            "the HEAD tree should yield more than the root module"
+        );
         assert!(
             lat.nodes().iter().any(|k| k.name == "Cargo.toml"),
             "the tracked Cargo.toml should appear as a File node"
