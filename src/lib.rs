@@ -12,14 +12,18 @@
 //   * `lattice` — the pure, dependency-free engine (SCC condensation, partial
 //     order, LOD zoom, containment meet). Reference core today; designed to be
 //     swapped for an AffineScript→Wasm core later (ADR-001) without host churn.
-//   * `ingest`  — repository → lattice (std-only filesystem walk).
-//   * `store`   — persistence seam; VeriSimDB octad backend behind `--features verisim`.
+//   * `ingest`  — repository → lattice (std-only filesystem walk; git-aware
+//     HEAD-tree + co-change ingest behind `--features git-integration`).
+//   * `store`   — persistence seam; JSON `FileStore` for the standalone
+//     build→query loop, VeriSimDB octad backend behind `--features verisim`.
+//   * `query`   — token-budgeted context packs over a built lattice.
 //   * `api`     — actix-web REST surface.
 
 #![forbid(unsafe_code)]
 
-pub mod lattice;
 pub mod ingest;
+pub mod lattice;
+pub mod query;
 pub mod store;
 
 pub mod api {

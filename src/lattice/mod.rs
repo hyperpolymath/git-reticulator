@@ -13,6 +13,7 @@
 // replace it without touching the host (ADR-001, AffineScript-first target).
 // All IO (git ingestion, verisim persistence) lives outside this module.
 
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap, VecDeque};
 
 /// Index of a node into [`Lattice::nodes`]. Stable for the lattice's lifetime.
@@ -20,7 +21,8 @@ pub type NodeId = usize;
 
 /// Level-of-detail tier. The containment hierarchy (`parent`) runs
 /// Module ⊃ File ⊃ Definition ⊃ Block.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SemanticLevel {
     Module,
     File,
@@ -51,19 +53,21 @@ impl SemanticLevel {
 
 /// A semantic keyword node: simultaneously a lattice element (order position via
 /// `parent`/edges) and a neural element (`embedding`) — the neuro-symbolic seam.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Keyword {
     pub id: NodeId,
     pub name: String,
     pub file: String,
     pub level: SemanticLevel,
     pub parent: Option<NodeId>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub embedding: Option<Vec<f64>>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub cluster: Option<String>,
 }
 
 /// A typed, weighted relationship (calls / contains / depends_on / …).
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Relationship {
     pub source: NodeId,
     pub target: NodeId,
@@ -133,7 +137,7 @@ impl Condensation {
 
 /// A semantic lattice: typed keyword nodes + weighted relationships, with the
 /// algebra that earns the name (condensation, partial order, meet, LOD zoom).
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Lattice {
     nodes: Vec<Keyword>,
     edges: Vec<Relationship>,
@@ -393,7 +397,12 @@ pub mod affine {
     /// reports an engine summary. Never touches the filesystem or network.
     pub fn build_lattice(repo: &str, db: &str) {
         let mut builder = LatticeBuilder::new();
-        builder.add_keyword(repo.to_string(), repo.to_string(), SemanticLevel::Module, None);
+        builder.add_keyword(
+            repo.to_string(),
+            repo.to_string(),
+            SemanticLevel::Module,
+            None,
+        );
         let lattice = builder.build();
         let cond = lattice.condense();
         println!(
@@ -406,7 +415,9 @@ pub mod affine {
 
     /// Compat entry point for a zoom request. IO-free.
     pub fn query_lattice(zoom: &str, db: &str) {
-        println!("zoom target '{zoom}' [source: {db}] — run `reticulate build` to populate a lattice");
+        println!(
+            "zoom target '{zoom}' [source: {db}] — run `reticulate build` to populate a lattice"
+        );
     }
 }
 
@@ -419,11 +430,36 @@ mod tests {
     fn fixture() -> Lattice {
         let mut b = LatticeBuilder::new();
         let m = b.add_keyword("root".into(), "/".into(), SemanticLevel::Module, None);
-        let f1 = b.add_keyword("auth.rs".into(), "/auth.rs".into(), SemanticLevel::File, Some(m));
-        let f2 = b.add_keyword("db.rs".into(), "/db.rs".into(), SemanticLevel::File, Some(m));
-        let d1 = b.add_keyword("login".into(), "/auth.rs".into(), SemanticLevel::Definition, Some(f1));
-        let d2 = b.add_keyword("session".into(), "/auth.rs".into(), SemanticLevel::Definition, Some(f1));
-        let d3 = b.add_keyword("connect".into(), "/db.rs".into(), SemanticLevel::Definition, Some(f2));
+        let f1 = b.add_keyword(
+            "auth.rs".into(),
+            "/auth.rs".into(),
+            SemanticLevel::File,
+            Some(m),
+        );
+        let f2 = b.add_keyword(
+            "db.rs".into(),
+            "/db.rs".into(),
+            SemanticLevel::File,
+            Some(m),
+        );
+        let d1 = b.add_keyword(
+            "login".into(),
+            "/auth.rs".into(),
+            SemanticLevel::Definition,
+            Some(f1),
+        );
+        let d2 = b.add_keyword(
+            "session".into(),
+            "/auth.rs".into(),
+            SemanticLevel::Definition,
+            Some(f1),
+        );
+        let d3 = b.add_keyword(
+            "connect".into(),
+            "/db.rs".into(),
+            SemanticLevel::Definition,
+            Some(f2),
+        );
         // login -> session -> connect -> login  (a cycle, to exercise SCC)
         b.add_relationship(d1, d2, 1.0, "calls".into());
         b.add_relationship(d2, d3, 1.0, "calls".into());

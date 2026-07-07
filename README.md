@@ -14,14 +14,15 @@ you can **zoom** into, so an LLM gets the minimal relevant context
 instead of the whole tree.
 
 > [!IMPORTANT]
-> **Maturity: experimental / early skeleton.** The Rust host is ~237 LOC
-> of `println!` stubs; the lattice core lives in
-> `src/lattice/affine/*.affine` (AffineScript) which **cannot compile
-> yet** and, as written, calls Rust crates AffineScript cannot bind.
-> `git2`/`postgres`/embeddings are feature-gated **off**. There are **no
-> proofs** — the word "lattice" is not yet earned (it is currently a
-> typed digraph; see
-> <a href="PROOF-NEEDS.md" class="md">PROOF-NEEDS</a>). Read
+> **Maturity: experimental.** The Rust reference engine is real
+> (SCC condensation, partial order, LOD zoom, containment meet) and the
+> build→query dogfood loop works end-to-end: `reticulate build` persists
+> a lattice file, `reticulate query` returns token-budgeted context
+> packs (see `docs/DOGFOOD.adoc`). The AffineScript core in
+> `src/lattice/affine/*.affine` is **aspirational** (deferred behind the
+> ADR-006 bridge); `postgres`/embeddings are feature-gated **off**;
+> mechanized proofs cover abstract order theory only, not yet the Rust
+> graph (see <a href="PROOF-NEEDS.md" class="md">PROOF-NEEDS</a>). Read
 > `.machine_readable/6a2/STATE.a2ml` for the honest status before
 > relying on anything here.
 
@@ -62,17 +63,22 @@ hallucinated (EXISTENCE). See `.machine_readable/6a2/NEUROSYM.a2ml` and
 # Quickstart
 
 ```bash
-just build                    # cargo build (default features; no git2/db/embeddings)
+cargo build --features git-integration   # git-aware ingest (plain `cargo build` = filesystem walk)
 
 # CLI binary is `reticulate` (subcommands: build | query | api):
-./target/debug/reticulate build --repo /path/to/repo --db postgres://localhost/gr
-./target/debug/reticulate query --zoom auth --db postgres://localhost/gr
+./target/debug/reticulate build --repo /path/to/repo
+#   → ingests the repo, writes /path/to/repo/.git-reticulator/lattice.json
+
+./target/debug/reticulate query --repo /path/to/repo --zoom auth --level definition --budget-tokens 800
+#   → token-budgeted context pack (add --format json for machine consumption)
+
 ./target/debug/reticulate --help
 ```
 
 > [!NOTE]
-> these run today but are **stubs** — `build` prints and returns; it
-> does not yet read the repo or write the DB.
+> `build` and `query` are **real** end-to-end (ingest → lattice file →
+> budgeted context pack; see `docs/DOGFOOD.adoc`). The `api` server and
+> the VeriSimDB store (`--features verisim`) remain thin.
 
 # Architecture
 

@@ -8,8 +8,8 @@
 [metadata]
 project = "git-reticulator"
 version = "0.1.0"
-last-updated = "2026-06-04"
-status = "active"   # tidy-up merged (PR #23); migration direction decided 2026-06-04
+last-updated = "2026-07-07"
+status = "active"   # dogfood loop landed 2026-07-07 (FileStore + budgeted query, CLI-wired)
 
 [migration-decision]
 date = "2026-06-04"
@@ -34,14 +34,15 @@ maturity = "experimental"   # experimental | alpha | beta | production | lts
 # ════════════════════════════════════════════════════════════════════════════
 [honest-status]
 lattice-engine = "REAL (src/lattice/mod.rs): Kosaraju SCC-condensation + partial order + LOD zoom (sound+complete) + meet (LCA). cargo green; 10 property/unit tests."
-ingest = "REAL but filesystem-only (src/ingest.rs, std-only, fail-soft). git2 HISTORY ingest NOT yet wired."
-store = "REAL: LatticeStore trait + InMemoryStore default; VeriSimDB octad backend over HTTP behind --features verisim (src/store.rs). Not yet wired into CLI/REST."
-host-reality = "CLI/REST still thin; the compat affine::{build_lattice,query_lattice} shim is now IO-free (no more println-only stubs)."
+ingest = "REAL: std-only filesystem walk (src/ingest.rs, fail-soft) + git2 HEAD-tree/co-change HISTORY ingest behind --features git-integration, wired into the CLI."
+store = "REAL: LatticeStore trait + InMemoryStore + JSON FileStore (versioned envelope, src/store.rs::file) — the default CLI persistence; VeriSimDB octad backend over HTTP behind --features verisim. FileStore wired into CLI build+query 2026-07-07."
+query = "REAL (src/query.rs, 2026-07-07): keyword resolve (case-insensitive, exact-then-coarse ranking) + token-budgeted context packs (chars/4 estimate, drops counted never silent) + text/JSON rendering. This is the dogfood surface — see docs/DOGFOOD.adoc."
+host-reality = "CLI build→query loop REAL end-to-end (ingest → lattice.json → budgeted context pack). REST api still thin; compat affine::{build_lattice,query_lattice} shim retained IO-free."
 embeddings = "NOT WIRED (tch/PyTorch feature off by default)"
 affine-core = "DEFERRED (ADR-006 bridge-first): the Rust engine is the reference core; the .affine core lands after the Rust↔AffineScript bridge."
 proofs = "ZERO mechanized (no .idr/.v/.ads). P2a/P4/P1b are TESTED not proved — see PROOF-NEEDS.md 'Proof status'. 'lattice' = meet-semilattice + digraph (full join not claimed)."
 rust-spark = "Stance documented (docs/decisions/rust-spark-stance.adoc) + spark-theatre-gate.yml added (lenient). Idris2/Zig ABI seam N/A until an FFI surface exists."
-tests = "30 pass (10 new lattice/ingest/store + 20 compat integration/property/api). cargo test exit 0."
+tests = "38+ pass (lattice/ingest/store/query incl. FileStore round-trip + budget-truncation honesty + compat integration/property/api). cargo test exit 0 (2026-07-07)."
 
 [crg]
 grade = "C"
@@ -70,7 +71,8 @@ template-debt = [
 # Core-language question DECIDED 2026-06-04 (ADR-006): AffineScript-first, bridge-first.
 actions = [
   "DELIVERABLE 1 (in affinescript repo, runtime/): build the Rust loader + marshalling for compiled AffineScript — the affine-js equivalent for Rust. Acceptance: a Rust test loads a compiled .affine fn, calls it, round-trips a string via a host extern fn. See docs/MIGRATION-PLAN.adoc.",
-  "LANDED 2026-06-04: Rust reference lattice core (SCC-condensation + partial order + LOD zoom + meet) + filesystem ingest + verisim store seam + 10 tests; cargo green; Rust/SPARK stance + spark-theatre-gate added. NEXT here: wire CLI/REST to ingest→lattice→store, add criterion benches, git2 history ingest.",
+  "LANDED 2026-06-04: Rust reference lattice core (SCC-condensation + partial order + LOD zoom + meet) + filesystem ingest + verisim store seam + 10 tests; cargo green; Rust/SPARK stance + spark-theatre-gate added.",
+  "LANDED 2026-07-07: dogfood loop — JSON FileStore persistence + token-budgeted query engine (src/query.rs) wired into CLI (build writes .git-reticulator/lattice.json, query loads it). NEXT here (docs/DOGFOOD.adoc order): measure token savings on real agent tasks; tree-sitter definition extraction; lattice freshness stamp (HEAD commit); Claude Code skill front-end; criterion benches.",
   "Earn the 'lattice' word: SCC-condensation + partial order in the core, then discharge PROOF-NEEDS.md P1-P2 (Idris2).",
   "Tests/benches: replace smoke-over-stubs with property tests (partial-order laws, zoom soundness/completeness) + criterion benches; strict-but-passable CI with an AffineScript compile gate.",
 ]

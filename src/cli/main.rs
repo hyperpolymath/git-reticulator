@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
-use clap::{Parser, Subcommand};
-use git_reticulator::lattice::affine;
+use clap::{Parser, Subcommand, ValueEnum};
+use git_reticulator::lattice::SemanticLevel;
+use git_reticulator::store::file::FileStore;
 use git_reticulator::store::LatticeStore;
+use std::path::PathBuf;
+
+/// Default lattice file location relative to the ingested repo.
+const DEFAULT_LATTICE_REL: &str = ".git-reticulator/lattice.json";
 
 #[derive(Parser)]
 #[command(name = "reticulate")]
@@ -12,25 +17,66 @@ struct Cli {
     command: Commands,
 }
 
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum LevelArg {
+    Module,
+    File,
+    Definition,
+    Block,
+}
+
+impl From<LevelArg> for SemanticLevel {
+    fn from(l: LevelArg) -> Self {
+        match l {
+            LevelArg::Module => SemanticLevel::Module,
+            LevelArg::File => SemanticLevel::File,
+            LevelArg::Definition => SemanticLevel::Definition,
+            LevelArg::Block => SemanticLevel::Block,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum FormatArg {
+    Text,
+    Json,
+}
+
 #[derive(Subcommand)]
 enum Commands {
-    /// Build a semantic lattice from a git repo
+    /// Build a semantic lattice from a repo and persist it to a local lattice
+    /// file (and optionally to VeriSimDB with --features verisim)
     Build {
-        /// Path to the git repository
-        #[arg(short, long)]
+        /// Path to the repository to ingest
+        #[arg(short, long, default_value = ".")]
         repo: String,
-        /// PostgreSQL database URI
+        /// Output lattice file (default: <repo>/.git-reticulator/lattice.json)
         #[arg(short, long)]
-        db: String,
+        out: Option<PathBuf>,
+        /// VeriSimDB base URL (http/https; requires --features verisim)
+        #[arg(short, long)]
+        db: Option<String>,
     },
-    /// Query the lattice with a zoom level to minimize token cost
+    /// Query a built lattice for a token-budgeted context pack
     Query {
-        /// Semantic node or keyword to zoom into
+        /// Keyword to resolve (case-insensitive substring over node names)
         #[arg(short, long)]
         zoom: String,
-        /// PostgreSQL database URI
+        /// Lattice file to query (default: <repo>/.git-reticulator/lattice.json)
         #[arg(short, long)]
-        db: String,
+        lattice: Option<PathBuf>,
+        /// Repository the lattice was built from (locates the default lattice file)
+        #[arg(short, long, default_value = ".")]
+        repo: String,
+        /// Level-of-detail to zoom matches to
+        #[arg(long, value_enum, default_value_t = LevelArg::Definition)]
+        level: LevelArg,
+        /// Output format
+        #[arg(short, long, value_enum, default_value_t = FormatArg::Text)]
+        format: FormatArg,
+        /// Token budget for the rendered context pack (chars/4 estimate)
+        #[arg(short, long, default_value_t = 2000)]
+        budget_tokens: usize,
     },
     /// Start the REST API server for LLM integration
     Api {
@@ -56,13 +102,17 @@ fn reticulate_ingest(repo: &str) -> git_reticulator::lattice::Lattice {
     git_reticulator::ingest::from_path(repo)
 }
 
+fn default_lattice_path(repo: &str) -> PathBuf {
+    PathBuf::from(repo).join(DEFAULT_LATTICE_REL)
+}
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
     env_logger::init();
 
     match &cli.command {
-        Commands::Build { repo, db } => {
+        Commands::Build { repo, out, db } => {
             println!("🚀 Reticulating {repo} ...");
             let lattice = reticulate_ingest(repo);
             let cond = lattice.condense();
@@ -74,34 +124,66 @@ async fn main() {
                 cond.is_acyclic()
             );
 
-            #[cfg(feature = "verisim")]
-            let to_verisim = if db.starts_with("http://") || db.starts_with("https://") {
-                let store = git_reticulator::store::verisim::VerisimStore::new(db.clone());
-                match store.persist(&lattice).await {
-                    Ok(n) => println!("📦 persisted {n} octads to VeriSimDB ({db})"),
-                    Err(e) => eprintln!("⚠️  verisim persist failed: {e}"),
+            let out_path = out.clone().unwrap_or_else(|| default_lattice_path(repo));
+            let mut store = FileStore::new(&out_path);
+            match store.persist(&lattice) {
+                Ok(n) => println!("📦 persisted {n} nodes to {}", out_path.display()),
+                Err(e) => {
+                    eprintln!("❌ cannot write {}: {e}", out_path.display());
+                    std::process::exit(1);
                 }
-                true
-            } else {
-                false
-            };
-            #[cfg(not(feature = "verisim"))]
-            let to_verisim = false;
-
-            if !to_verisim {
-                let mut store = git_reticulator::store::InMemoryStore::new();
-                let n = match store.persist(&lattice) {
-                    Ok(n) => n,
-                    // InMemoryStore is Infallible — this arm is unreachable.
-                    Err(never) => match never {},
-                };
-                println!("📦 persisted {n} nodes to the in-memory store (target: {db})");
             }
+
+            #[cfg(feature = "verisim")]
+            if let Some(db) = db {
+                if db.starts_with("http://") || db.starts_with("https://") {
+                    let store = git_reticulator::store::verisim::VerisimStore::new(db.clone());
+                    match store.persist(&lattice).await {
+                        Ok(n) => println!("📦 persisted {n} octads to VeriSimDB ({db})"),
+                        Err(e) => eprintln!("⚠️  verisim persist failed: {e}"),
+                    }
+                }
+            }
+            #[cfg(not(feature = "verisim"))]
+            if let Some(db) = db {
+                eprintln!("⚠️  --db {db} ignored: rebuild with --features verisim");
+            }
+
             println!("✅ done.");
         }
-        Commands::Query { zoom, db } => {
-            println!("🔍 Querying lattice for context: {}", zoom);
-            affine::query_lattice(zoom, db);
+        Commands::Query {
+            zoom,
+            lattice,
+            repo,
+            level,
+            format,
+            budget_tokens,
+        } => {
+            let path = lattice
+                .clone()
+                .unwrap_or_else(|| default_lattice_path(repo));
+            let lat = match FileStore::load(&path) {
+                Ok(lat) => lat,
+                Err(e) => {
+                    eprintln!(
+                        "❌ {e}\n   no usable lattice at {} — run `reticulate build --repo {repo}` first",
+                        path.display()
+                    );
+                    std::process::exit(1);
+                }
+            };
+            let result =
+                git_reticulator::query::context_pack(&lat, zoom, (*level).into(), *budget_tokens);
+            match format {
+                FormatArg::Text => print!("{}", git_reticulator::query::render_text(&result)),
+                FormatArg::Json => match serde_json::to_string_pretty(&result) {
+                    Ok(json) => println!("{json}"),
+                    Err(e) => {
+                        eprintln!("❌ cannot serialize result: {e}");
+                        std::process::exit(1);
+                    }
+                },
+            }
         }
         Commands::Api { db } => {
             println!("🌐 Starting Git-Reticulator API on http://localhost:8080");
