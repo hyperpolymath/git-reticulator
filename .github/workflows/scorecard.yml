@@ -15,6 +15,7 @@ on:
 # `read-all` startup_failure seen estate-wide. Matches the canonical caller in
 # hyperpolymath/standards/.github/workflows/scorecard-reusable.yml.
 permissions:
+  actions: read
   contents: read
 
 jobs:

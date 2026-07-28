@@ -18,6 +18,7 @@ on:
     branches: [main, master]
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
