@@ -57,7 +57,7 @@ blockers = [
   "'lattice' is a meet-semilattice + digraph; meet/zoom tested not proved (severity: medium; PROOF-NEEDS.md)",
 ]
 template-debt = [
-  "RESOLVED 2026-06-03: 0-AI-MANIFEST.a2ml had [YOUR-REPO-NAME]/{{AUTHOR}} placeholders",
+  "RESOLVED 2026-06-03: 0-AI-MANIFEST.a2ml had [YOUR-REPO-NAME]/Jonathan D.A. Jewell placeholders",
   "RESOLVED 2026-06-03: 6a2 metadata set created (was missing entirely)",
   "RESOLVED 2026-06-03: NEUROSYM.a2ml/PLAYBOOK.a2ml were empty commented stubs",
   "RESOLVED 2026-06-03: methodology.a2ml had {{...}} placeholders (would reject itself)",
