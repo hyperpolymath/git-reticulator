@@ -1,21 +1,21 @@
-<!--
-SPDX-License-Identifier: CC-BY-SA-4.0
-Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
--->
-# Git-Reticulator: Database Setup
+== Git-Reticulator: Database Setup
 
-To support topological queries and hierarchical LOD (Level of Detail) zooming, Git-Reticulator uses **PostgreSQL** with the **pgRouting** extension.
+To support topological queries and hierarchical LOD (Level of Detail)
+zooming, Git-Reticulator uses *PostgreSQL* with the *pgRouting*
+extension.
 
-## 🐘 Prerequisites
-- PostgreSQL 14+
-- PostGIS
-- pgRouting
+=== 🐘 Prerequisites
 
-## 🛠️ Schema Initialization
+* PostgreSQL 14+
+* PostGIS
+* pgRouting
+
+=== 🛠️ Schema Initialization
 
 Run the following SQL to set up the semantic lattice environment:
 
-```sql
+[source,sql]
+----
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pgrouting;
@@ -58,17 +58,18 @@ CREATE TABLE IF NOT EXISTS relationships (
 -- 3. Topology Generation
 -- After inserting relationships, run pgr_createTopology to populate source/target integers.
 -- This is handled by the Git-Reticulator storage engine.
-```
+----
 
-## 🔍 Example pgRouting Query (Shortest Semantic Path)
+=== 🔍 Example pgRouting Query (Shortest Semantic Path)
 
 To find the most direct semantic relationship between two nodes:
 
-```sql
+[source,sql]
+----
 SELECT * FROM pgr_dijkstra(
     'SELECT id, source, target, cost FROM relationships',
     1, -- Start node ID (integer)
     50, -- End node ID (integer)
     directed := true
 );
-```
+----
