@@ -17,7 +17,7 @@ author = "Jonathan D.A. Jewell (hyperpolymath)"
 build-tool = "just"
 container-runtime = "podman"
 ci-platform = "github-actions"
-package-manager = "cargo"     # guix.scm / flake.nix also present for reproducible shells
+package-manager = "cargo"     # guix.scm / flake.guix also present for reproducible shells
 
 # ════════════════════════════════════════════════════════════════════════════
 # ARCHITECTURE DECISIONS (ADRs) — status: proposed | accepted | superseded | rejected
