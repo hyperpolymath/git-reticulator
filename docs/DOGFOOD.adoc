@@ -64,16 +64,31 @@ heuristic), not more infrastructure.
   bridge lands (ADR-006, tracked in the `affinescript` repo).
 * *Proofs* — PROOF-NEEDS.md governs the "lattice" claim, not the dogfood loop.
 
-== Path to production-ready (proposed order)
+== Path to production-ready (owner-ratified 2026-07-07)
 
-1. *Dogfood loop* (this document) — DONE: persistence + budgeted query.
-2. *Measurement* — the experiment above; publish numbers in this file.
-3. *Ingestion quality* — tree-sitter (or per-language) definition extraction;
-   `calls`/`imports` edges, not just containment + co-change.
-4. *Freshness* — record the HEAD commit in the lattice file; `query` warns
-   when the lattice is stale relative to the repo.
-5. *Agent surface* — a Claude Code skill (estate-wide) that fronts `reticulate
-   query`; optionally the REST API for non-CLI consumers.
+Order and shape reflect the owner's decisions D1–D4 (recorded in agent memory
+`project_git_reticulator_dogfood_loop_2026_07_07`).
+
+1. *Dogfood loop* (this document) — DONE: persistence + budgeted query (PR #62).
+2. *Measurement (D2: run it first)* — the A/B experiment above, run against the
+   current heuristic loop to get a baseline, then re-run after step 3. Publish
+   the input-token deltas + files-found accuracy in this file. This is the gate:
+   it proves (or kills) the premise before deeper investment.
+3. *Ingestion quality (D3: tree-sitter now)* — replace the line-prefix extractor
+   with tree-sitter per-language symbol extraction; add `calls`/`imports` edges,
+   not just containment + co-change. This is the biggest single lever on pack
+   quality and its own focused PR.
+4. *Freshness (D4: warn, still answer)* — record the HEAD commit in the lattice
+   file; `query` prints a staleness warning when the lattice was built at a
+   different HEAD, but still returns the pack. Small, own PR (extends the
+   FileStore envelope + a query-time check).
+5. *Agent surface (D1: MCP server)* — expose `query` as an MCP tool
+   (`reticulate_query(topic, level, budget) -> context pack JSON`) so any
+   MCP-capable client can consume it, not just Claude Code. Own PR.
 6. *CRG B* — lint/fmt/doc-coverage targets per READINESS.md.
-7. *The neuro-symbolic stack* — embeddings, VeriSimDB, proof-carrying
-   retrieval — only after steps 1–5 prove the symbolic half pays for itself.
+7. *The neuro-symbolic stack* — embeddings, VeriSimDB, proof-carrying retrieval
+   — only after steps 2–5 prove the symbolic half pays for itself.
+
+Each of steps 3–5 is a separate reviewable PR; do not bundle them. Step 2
+(measurement) precedes 3 so the tree-sitter investment is made against a known
+baseline, not on faith.
