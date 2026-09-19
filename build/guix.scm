@@ -1,6 +1,6 @@
 ;; SPDX-License-Identifier: MPL-2.0
 ;; Guix development environment.
-;; Usage: guix shell -D -f guix.scm
+;; Usage: guix shell -D -f build/guix.scm
 
 (use-modules (guix packages)
              (guix build-system gnu)
