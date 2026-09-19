@@ -71,6 +71,10 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: '_site'
+          # actions/upload-pages-artifact strips dot-entries by default
+          # (its tar runs --exclude=.[^/]*), which silently removed
+          # .well-known/ from the artifact. Publish it deliberately.
+          include-hidden-files: true
   deploy:
     environment:
       name: github-pages
