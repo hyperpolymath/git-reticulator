@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   rust-ci:
-    uses: hyperpolymath/standards/.github/workflows/rust-ci-reusable.yml@d135b05bfc647d0c0fbfedc7e80f37ea50f49236
+    uses: hyperpolymath/standards/.github/workflows/rust-ci-reusable.yml@eafcfbb5933dde8b42fdbd61483794bb75fb4c97
 
   # The reusable job tests default features only; this keeps the feature-gated
   # git ingest compiling (it silently broke once — git2 0.21 API drift).

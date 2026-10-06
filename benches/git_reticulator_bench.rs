@@ -13,9 +13,10 @@
 //   engine/precedes  - node partial-order query (condenses internally per call)
 //   engine/ingest    - std-only filesystem walk of this repo's own `src/` tree
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use git_reticulator::ingest;
 use git_reticulator::lattice::{Lattice, LatticeBuilder, SemanticLevel};
+use std::hint::black_box;
 
 /// Build a synthetic lattice of `modules` modules, each with `files_per` files,
 /// each with `defs_per` definitions (Module ⊃ File ⊃ Definition). Definitions
