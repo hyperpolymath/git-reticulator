@@ -1,0 +1,235 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= AFFIRMATION — git-reticulator, as of 2026-10-07
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+:status: DRAFT — agent-authored, NOT affirmed by the owner
+:toc:
+:icons: font
+
+[WARNING]
+====
+*DRAFT.* An AI agent wrote this file and did not commit it. It becomes an
+affirmation only when the owner lands it with a signed commit whose parent is
+the anchor SHA below
+(`19f568189c465ba6666b6c26ece059d5871f58e1`). Until then, read it as a draft.
+====
+
+== What this is, and how it works
+
+git-reticulator is a Rust crate with one binary, `reticulate`. `reticulate
+build` walks a repository and writes a graph of its directories, files and
+definitions to `.git-reticulator/lattice.json`. `reticulate query` returns a
+token-budgeted context pack from that graph. Optional Cargo features
+(`git-integration`, `verisim`, `db`, `embeddings`) add git history, a
+VeriSimDB sink, Postgres and embeddings. A separate Idris2 corpus in
+`verification/proofs/` proves elementary order theory. The AffineScript files
+under `src/lattice/affine/` are not compiled by anything.
+
+== The epistemic contract
+
+You may conclude that, at the anchor commit and at the stated time, each
+command below produced the stated exit code and count on the stated toolchain.
+
+You may *not* conclude that the structure the Rust code builds is a lattice or
+a partial order. The Idris2 proofs are about an abstract `PartialOrder`
+record and natural numbers; nothing connects them to the Rust graph. You may
+also not conclude anything about the `verisim`, `db` or `embeddings`
+features: none was built or tested.
+
+== Verifiable anchor
+
+[cols="1,3", options="header"]
+|===
+| Field | Value
+
+| Repo
+| `hyperpolymath/git-reticulator`
+
+| Branch
+| `main` (worktree branch `docs/affirmation-2026-10-07` at `origin/main`)
+
+| Commit (HEAD)
+| `19f568189c465ba6666b6c26ece059d5871f58e1`
+
+| Permalink
+| https://github.com/hyperpolymath/git-reticulator/tree/19f568189c465ba6666b6c26ece059d5871f58e1
+
+| Verified (UTC)
+| 2026-10-07T10:51:23Z (first run) to 2026-10-07T10:55:01Z (last run)
+
+| Working-tree delta at verification
+| `clean`. `git status --porcelain` was empty. The dogfood run wrote
+  `.git-reticulator/` and the Idris2 build wrote `verification/proofs/build/`;
+  both are gitignored and were removed afterwards. Cargo output went to a
+  target directory outside the tree.
+
+| Toolchain
+| rustc 1.99.0 (b940084d7 2026-09-28), cargo 1.99.0 (5f94df478 2026-08-27),
+  Idris 2 0.8.0, GNU grep, git 2.47.3. Debian 13 on WSL2.
+|===
+
+[IMPORTANT]
+====
+If you are reading this at a later commit, the claims may have drifted. Re-run
+the reproduction steps and write a fresh affirmation; do not trust a stale one.
+====
+
+== Companion documents and repo metadata (cross-check)
+
+* `README.adoc` calls the project *experimental* and says the proofs cover
+  abstract order theory only. Both statements agree with the runs below.
+* `PROOF-NEEDS.adoc` says the built structure is "a typed, weighted digraph
+  ... not (yet) a lattice, not even a partial order", and asks prose to say
+  "typed graph" until that is proved. This file follows that rule. The dogfood
+  run below reports `acyclic=true` for this repository, which is a property of
+  one input, not a proof.
+* `docs/DOGFOOD.adoc` describes the build-then-query loop. It says token
+  savings are not yet measured. This file does not measure them either.
+* `README.adoc` sends readers to `.machine_readable/6a2/STATE.a2ml` for the
+  honest status (lines 23 and 97). That directory and its six `.a2ml` files
+  still exist at the anchor, last changed 2026-08-28. A2ML is a retired
+  format in this estate; see *Outstanding* below.
+
+== The honest state (one breath)
+
+The Rust test suites pass in the default and `git-integration` builds, the
+code is `rustfmt`-clean, and the binary builds a graph of its own repository
+and answers a budgeted query. The Idris2 order-theory module type-checks with
+no proof escapes. The proofs do not yet touch the Rust code.
+
+=== What is solid (and how we checked)
+
+[cols="2,3,1", options="header"]
+|===
+| Claim | Command | Result
+
+| Default-feature tests pass
+| `cargo test --locked`
+| exit 0; 38 passed, 0 failed (17 lib, 2 api, 13 integration,
+  6 property; 0 doc-tests)
+
+| `git-integration` tests pass (the feature CI uses)
+| `cargo test --locked --features git-integration`
+| exit 0; 39 passed, 0 failed (18 lib, 2 api, 13 integration,
+  6 property)
+
+| Formatting is clean
+| `cargo fmt --all --check`
+| exit 0
+
+| The binary builds
+| `cargo build --locked --features git-integration`
+| exit 0, 0 warnings in the log
+
+| Dogfood build works on this repository
+| `reticulate build --repo .`
+| exit 0; 262 nodes, 196 edges, 262 components, `acyclic=true`
+
+| Dogfood query honours the token budget
+| `reticulate query --repo . --zoom lattice --level file
+  --budget-tokens 800`; then the same with `--budget-tokens 100`
+| exit 0 both; 2804 bytes at 800; 504 bytes at 100, with 2 "omitted
+  (budget)" lines
+
+| The Idris2 corpus type-checks
+| `idris2 --build git-reticulator-proofs.ipkg` in `verification/proofs`
+| exit 0; 1 of 1 module built (`Lattice.Order`, `%default total`)
+
+| No proof escapes in the corpus
+| `grep -rnE '\b(believe_me|really_believe_me|assert_total|assert_smaller|
+  idris_crash|postulate|sorry)\b' verification/proofs --include='*.idr'`
+| exit 1 (0 matches)
+
+| That grep can find an escape
+| Same grep on a scratch copy of the corpus with `bad = believe_me ()`
+  appended to `Lattice/Order.idr`
+| 1 match (planted control)
+|===
+
+=== The honest nuance you must not lose
+
+* "Lattice" is the project's name for its output, not a proved property.
+  `Lattice/Order.idr` proves reflexivity, transitivity and antisymmetry for an
+  abstract record and gives one instance, `Leq` on `Nat`. It does not mention
+  the Rust types.
+* The crate is small: `src/` holds 1777 lines of Rust (`wc -l`) and 128 lines
+  of AffineScript that nothing compiles.
+* `reticulate build --db postgresql://x` exits 0 in the default build. It
+  prints a warning that `--db` is ignored without `--features verisim`, then
+  writes the local file. That is a loud fallback, but the exit code alone
+  would not tell a script that the database write did not happen.
+* The two test runs share 38 tests. The 39th,
+  `ingest::git_history_tests::ingests_self_repo_with_structure_and_remains_a_dag`,
+  exists only with `git-integration`; it checks that this repository's own
+  graph is a DAG, which again is one input, not a proof.
+
+=== Known-incomplete but honestly fenced
+
+* The `verisim`, `db` and `embeddings` features were not built or tested here.
+  `embeddings` pulls in `tch` (libtorch), which this machine was not set up
+  for. The README says these are feature-gated off.
+* `README.adoc` and `docs/DOGFOOD.adoc` both say token savings are not yet
+  measured. That is still true.
+
+=== Outstanding / weak / refuted (no spin)
+
+* The README points readers to `.machine_readable/6a2/STATE.a2ml`,
+  `NEUROSYM.a2ml` and `PLAYBOOK.a2ml` as the canonical state. The estate has
+  retired A2ML and the `6a2/` directory. Six `.a2ml` files remain there, and a
+  seventh, `0-AI-MANIFEST.a2ml`, sits at the root. This file does not cite any
+  of them as evidence.
+* There is no link between the Idris2 proofs and the Rust graph, as
+  `PROOF-NEEDS.adoc` itself says.
+* On this machine the repo's `mise.toml` is not trusted, and the cargo shim
+  that `mise` provides refuses to run in the tree. The runs above used the
+  cargo binaries directly. This is a machine setting, not a repo defect, but
+  `just test` fails out of the box here for that reason.
+
+== Reproduce it yourself
+
+Run from the repository root at the anchor commit.
+
+[source,bash]
+----
+cargo test --locked                              # 38 passed, 0 failed
+cargo test --locked --features git-integration   # 39 passed, 0 failed
+cargo fmt --all --check                          # exit 0
+cargo build --locked --features git-integration  # exit 0
+./target/debug/reticulate build --repo .         # 262 nodes, 196 edges
+./target/debug/reticulate query --repo . --zoom lattice --level file \
+  --budget-tokens 800                            # exit 0
+ESC='believe_me|really_believe_me|assert_total|assert_smaller'
+ESC="$ESC|idris_crash|postulate|sorry"
+grep -rnE "\b($ESC)\b" verification/proofs --include='*.idr'
+                                                 # no output, exit 1
+(cd verification/proofs && idris2 --build git-reticulator-proofs.ipkg)
+                                                 # 1/1 Lattice.Order
+rm -rf .git-reticulator verification/proofs/build   # tidy up
+----
+
+The node and edge counts describe this commit's own tree. They change
+whenever a file is added or removed.
+
+== One-line characterisation (quote this)
+
+At `19f56818`, git-reticulator passes 39 of 39 Rust tests with
+`git-integration`, builds and queries a 262-node graph of itself, and
+type-checks one escape-free Idris2 order-theory module that does not yet
+speak about the Rust code.
+
+== Joint attestation
+
+*Engineering party (AI).* `claude-opus-5-5` ran every command in this file
+between 2026-10-07T10:51:23Z and 2026-10-07T10:55:01Z, in a git worktree
+checked out at the anchor commit. The wording above is a faithful report of
+those runs. No claim was copied from an earlier document.
+
+*Owner / maintainer.* Jonathan D.A. Jewell signs by landing this file:
+
+[source,bash]
+----
+git commit -S -s -m "docs: affirm state at 19f56818"
+git log --show-signature -1
+----
+
+The affirmation is anchored only if the parent of that commit is
+`19f568189c465ba6666b6c26ece059d5871f58e1` and the signature verifies.
