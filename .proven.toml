@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MPL-2.0
+# Manifest for this repository (schema proven/manifest/v1); see
+# hyperpolymath/proven-cicd-and-workflows docs/PROVEN-ADOPTION.adoc.
+schema = "proven/manifest/v1"
+
+# ---------------------------------------------------------------- languages
+[languages.ignore.idris2]
+reason = "verification/proofs/git-reticulator-proofs.ipkg holds the Idris2 lattice proofs (PROOF-NEEDS.adoc); the umbrella cannot provision idris2 in release 0.1"
+
+[languages.ignore.shell]
+reason = "setup.sh is a one-off developer bootstrap script, not product code, and has no tests of its own"
+
+# ------------------------------------------------------------------- rust
+# Stated explicitly (not left to the Justfile) so the gate does not depend on
+# `just` being installed: the Justfile `test` and `build` recipes are plain
+# `cargo test` and `cargo build`. Default features only, as in rust-ci.yml;
+# the feature-gated `git-integration` job stays in rust-ci.yml.
+[categories.unit.rust]
+command = "cargo test --workspace --locked"
+
+[categories.build.rust]
+command = "cargo build --workspace --all-targets --locked"
+
+# tests/integration_tests.rs and tests/api_tests.rs drive the in-process
+# `affine` shim, not the reticulate binary, so they are not a smoke or p2p
+# signal. They run under unit. Visible, expiring waivers, not N/A.
+[categories.smoke.rust.waiver]
+reason = "no smoke test: nothing runs the built `reticulate` binary end to end (build then query on a local lattice file works by hand but there is no test target); the zero-test check needs a cargo test target, tests/smoke.rs"
+until = "2027-01-15"
+
+[categories.p2p.rust.waiver]
+reason = "no p2p test: the REST API (actix, src/api) and the VeriSimDB store seam have no test that starts them and talks across the boundary; the existing e2e tests use an in-process shim"
+until = "2027-01-15"
+
+# ------------------------------------------------------------------ bench
+# Criterion bench benches/git_reticulator_bench.rs. One CPU-bound target is
+# gated: the median of engine/condense/2368 (SCC condensation of the largest
+# synthetic lattice), converted to nanoseconds and printed as the last line.
+# Wall-clock time of the whole `cargo bench` is not used: criterion's sampling
+# time is fixed, so it says nothing about the code.
+[bench.condense_2368]
+metric = "median_ns"
+baselining = true   # first runs only: no history passes, with a record
+command = '''
+cargo bench --locked --bench git_reticulator_bench -- --noplot "engine/condense/2368" | awk '/engine\/condense\/2368 +time:/ { v=$5; u=$6; if (u=="ns") m=1; else if (u=="µs") m=1000; else if (u=="ms") m=1000000; else if (u=="s") m=1000000000; else exit 1; printf "%.0f\n", v*m; f=1 } END { if (!f) exit 1 }'
+'''
